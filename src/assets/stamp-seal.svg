@@ -1,0 +1,7 @@
+<svg width="240" height="240" viewBox="0 0 240 240" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <circle cx="120" cy="120" r="95" stroke="#E94D83" stroke-width="14"/>
+  <circle cx="120" cy="120" r="72" stroke="#E94D83" stroke-opacity="0.55" stroke-width="8" stroke-dasharray="6 8"/>
+  <path d="M76 120L106 150L166 90" stroke="#E94D83" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="120" y="58" text-anchor="middle" fill="#E94D83" font-size="18" font-weight="700" font-family="Noto Sans KR, sans-serif">완료</text>
+  <text x="120" y="202" text-anchor="middle" fill="#E94D83" font-size="15" font-weight="700" font-family="Noto Sans KR, sans-serif">사람사랑 생명사랑</text>
+</svg>
