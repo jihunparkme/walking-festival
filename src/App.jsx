@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
   steps: "walkingFestival.steps",
   entryNumber: "walkingFestival.entryNumber",
+  issuedEntryNumbers: "walkingFestival.issuedEntryNumbers",
   photo: "walkingFestival.photo",
 };
 
@@ -32,6 +33,28 @@ function haversineMeters(prev, next) {
     Math.sin(dLat / 2) ** 2 +
     Math.cos(toRad(prev.latitude)) * Math.cos(toRad(next.latitude)) * Math.sin(dLng / 2) ** 2;
   return 2 * earthRadius * Math.asin(Math.sqrt(a));
+}
+
+function generateUniqueEntryNumber() {
+  const issuedNumbers = new Set(readJSON(STORAGE_KEYS.issuedEntryNumbers, []));
+  let generated = "";
+  let attempts = 0;
+
+  do {
+    generated = String(Math.floor(100000 + Math.random() * 900000));
+    attempts += 1;
+  } while (issuedNumbers.has(generated) && attempts < 5000);
+
+  // 충돌이 반복되면 시간 기반 번호로 대체해 중복 발급을 방지한다.
+  if (issuedNumbers.has(generated)) {
+    generated = `${Date.now()}${Math.floor(Math.random() * 1000)
+      .toString()
+      .padStart(3, "0")}`;
+  }
+
+  issuedNumbers.add(generated);
+  localStorage.setItem(STORAGE_KEYS.issuedEntryNumbers, JSON.stringify([...issuedNumbers]));
+  return generated;
 }
 
 export default function App() {
@@ -70,11 +93,13 @@ export default function App() {
   }, [steps]);
 
   useEffect(() => {
-    // 사용자 접속 시 6자리 추첨 번호를 1회 발급한다.
-    if (!entryNumber) {
-      const generated = String(Math.floor(100000 + Math.random() * 900000));
-      setEntryNumber(generated);
-      localStorage.setItem(STORAGE_KEYS.entryNumber, generated);
+    if (!entryNumber) return;
+
+    // 기존 사용자 번호도 중복 방지 목록에 포함해 이후 재발급 충돌을 줄인다.
+    const issuedNumbers = new Set(readJSON(STORAGE_KEYS.issuedEntryNumbers, []));
+    if (!issuedNumbers.has(entryNumber)) {
+      issuedNumbers.add(entryNumber);
+      localStorage.setItem(STORAGE_KEYS.issuedEntryNumbers, JSON.stringify([...issuedNumbers]));
     }
   }, [entryNumber]);
 
@@ -186,6 +211,13 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
+  function joinCampaign() {
+    if (entryNumber) return;
+    const generated = generateUniqueEntryNumber();
+    setEntryNumber(generated);
+    localStorage.setItem(STORAGE_KEYS.entryNumber, generated);
+  }
+
   return (
     <div className="min-h-screen pb-28 text-ink">
       <header className="mx-auto w-full max-w-[30rem] px-4 pt-6 md:max-w-4xl md:px-6">
@@ -224,6 +256,7 @@ export default function App() {
             onToggleSimulation={toggleSimulation}
             onPhotoUpload={handlePhotoUpload}
             photoDataUrl={photoDataUrl}
+            onJoinCampaign={joinCampaign}
           />
         )}
       </main>
