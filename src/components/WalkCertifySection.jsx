@@ -7,6 +7,7 @@ export default function WalkCertifySection({
   geoEnabled,
   simulating,
   onStartGeolocation,
+  onOpenLocationSettings,
   onStopGeolocation,
   onToggleSimulation,
   onPhotoUpload,
@@ -83,6 +84,13 @@ export default function WalkCertifySection({
             className="rounded-full bg-[#9fb2cc] px-4 py-2 text-sm font-bold text-white"
           >
             위치 측정 중지
+          </button>
+          <button
+            type="button"
+            onClick={onOpenLocationSettings}
+            className="rounded-full bg-[#ff9f43] px-4 py-2 text-sm font-bold text-white"
+          >
+            위치 권한 설정 열기
           </button>
           <button
             type="button"

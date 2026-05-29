@@ -132,6 +132,44 @@ export default function App() {
     setSelectedStamp(null);
   }
 
+  function startSimulation() {
+    if (simulationRef.current) return;
+
+    simulationRef.current = window.setInterval(() => {
+      setSteps((prev) => prev + Math.floor(2 + Math.random() * 7));
+    }, 1000);
+    setSimulating(true);
+  }
+
+  function stopSimulation() {
+    if (!simulationRef.current) return;
+
+    window.clearInterval(simulationRef.current);
+    simulationRef.current = null;
+    setSimulating(false);
+  }
+
+  function openLocationSettings() {
+    const candidates = [
+      "App-Prefs:root=LOCATION_SERVICES",
+      "App-Prefs:root=Privacy&path=LOCATION",
+      "android.settings.LOCATION_SOURCE_SETTINGS",
+      "chrome://settings/content/location",
+      "ms-settings:privacy-location",
+    ];
+
+    for (const candidate of candidates) {
+      try {
+        window.location.href = candidate;
+        return;
+      } catch {
+        // 일부 브라우저에서는 바로 열 수 없으므로 다음 후보로 넘어간다.
+      }
+    }
+
+    window.open("https://support.google.com/chrome/answer/142065?hl=ko", "_blank", "noopener,noreferrer");
+  }
+
   function startGeolocation() {
     if (!navigator.geolocation) {
       setGeoStatus("이 브라우저에서는 위치 기능을 지원하지 않습니다. 시뮬레이션 모드를 사용해 주세요.");
@@ -163,8 +201,30 @@ export default function App() {
         previousPositionRef.current = current;
       },
       (error) => {
+        if (watchIdRef.current !== null) {
+          navigator.geolocation.clearWatch(watchIdRef.current);
+          watchIdRef.current = null;
+        }
+
         setGeoEnabled(false);
-        setGeoStatus(`위치 권한 오류: ${error.message}`);
+
+        if (error.code === 1) {
+          startSimulation();
+          setGeoStatus("위치 권한이 거부되었습니다. 아래 버튼으로 기기/브라우저 설정에서 위치 권한을 다시 허용해 주세요.");
+          return;
+        }
+
+        if (error.code === 2) {
+          setGeoStatus("현재 위치를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
+          return;
+        }
+
+        if (error.code === 3) {
+          setGeoStatus("위치 확인 시간이 초과되었습니다. 다시 시도해 주세요.");
+          return;
+        }
+
+        setGeoStatus("위치 측정을 시작할 수 없습니다. 시뮬레이션 모드를 사용해 주세요.");
       },
       {
         enableHighAccuracy: true,
@@ -185,16 +245,11 @@ export default function App() {
 
   function toggleSimulation() {
     if (simulating) {
-      window.clearInterval(simulationRef.current);
-      simulationRef.current = null;
-      setSimulating(false);
+      stopSimulation();
       return;
     }
 
-    simulationRef.current = window.setInterval(() => {
-      setSteps((prev) => prev + Math.floor(2 + Math.random() * 7));
-    }, 1000);
-    setSimulating(true);
+    startSimulation();
   }
 
   function handlePhotoUpload(event) {
@@ -252,6 +307,7 @@ export default function App() {
             geoEnabled={geoEnabled}
             simulating={simulating}
             onStartGeolocation={startGeolocation}
+            onOpenLocationSettings={openLocationSettings}
             onStopGeolocation={stopGeolocation}
             onToggleSimulation={toggleSimulation}
             onPhotoUpload={handlePhotoUpload}
