@@ -5,11 +5,9 @@ export default function WalkCertifySection({
   steps,
   geoStatus,
   geoEnabled,
-  simulating,
   onStartGeolocation,
   onOpenLocationSettings,
   onStopGeolocation,
-  onToggleSimulation,
   onPhotoUpload,
   photoDataUrl,
   onJoinCampaign,
@@ -92,16 +90,9 @@ export default function WalkCertifySection({
           >
             위치 권한 설정 열기
           </button>
-          <button
-            type="button"
-            onClick={onToggleSimulation}
-            className="rounded-full bg-[#f3a7c4] px-4 py-2 text-sm font-bold text-white"
-          >
-            {simulating ? "시뮬레이션 중지" : "시뮬레이션 시작"}
-          </button>
         </div>
         <p className="mt-2 text-xs text-[#5f6f88]">
-          {geoEnabled ? "실제 위치 추적 활성화" : "위치 권한이 없으면 시뮬레이션을 사용하세요."}
+          {geoEnabled ? "실제 위치 추적 활성화" : "위치 권한이 없으면 설정에서 허용해 주세요."}
         </p>
       </div>
 

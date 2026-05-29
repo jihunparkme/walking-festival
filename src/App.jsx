@@ -71,11 +71,9 @@ export default function App() {
 
   const [geoEnabled, setGeoEnabled] = useState(false);
   const [geoStatus, setGeoStatus] = useState("위치 권한을 허용하면 실제 이동 기반 걸음 수가 기록됩니다.");
-  const [simulating, setSimulating] = useState(false);
 
   const previousPositionRef = useRef(null);
   const watchIdRef = useRef(null);
-  const simulationRef = useRef(null);
 
   const completedStamps = useMemo(
     () => stampItems.filter((item) => stamps[item.id]).length,
@@ -108,9 +106,6 @@ export default function App() {
       if (watchIdRef.current !== null) {
         navigator.geolocation.clearWatch(watchIdRef.current);
       }
-      if (simulationRef.current) {
-        window.clearInterval(simulationRef.current);
-      }
     };
   }, []);
 
@@ -130,23 +125,6 @@ export default function App() {
     setStamps((prev) => ({ ...prev, [selectedStamp]: true }));
     setPasswordModalOpen(false);
     setSelectedStamp(null);
-  }
-
-  function startSimulation() {
-    if (simulationRef.current) return;
-
-    simulationRef.current = window.setInterval(() => {
-      setSteps((prev) => prev + Math.floor(2 + Math.random() * 7));
-    }, 1000);
-    setSimulating(true);
-  }
-
-  function stopSimulation() {
-    if (!simulationRef.current) return;
-
-    window.clearInterval(simulationRef.current);
-    simulationRef.current = null;
-    setSimulating(false);
   }
 
   function openLocationSettings() {
@@ -209,7 +187,6 @@ export default function App() {
         setGeoEnabled(false);
 
         if (error.code === 1) {
-          startSimulation();
           setGeoStatus("위치 권한이 거부되었습니다. 아래 버튼으로 기기/브라우저 설정에서 위치 권한을 다시 허용해 주세요.");
           return;
         }
@@ -241,15 +218,6 @@ export default function App() {
       previousPositionRef.current = null;
       setGeoStatus("위치 추적을 중지했습니다.");
     }
-  }
-
-  function toggleSimulation() {
-    if (simulating) {
-      stopSimulation();
-      return;
-    }
-
-    startSimulation();
   }
 
   function handlePhotoUpload(event) {
@@ -305,11 +273,9 @@ export default function App() {
             steps={steps}
             geoStatus={geoStatus}
             geoEnabled={geoEnabled}
-            simulating={simulating}
             onStartGeolocation={startGeolocation}
             onOpenLocationSettings={openLocationSettings}
             onStopGeolocation={stopGeolocation}
-            onToggleSimulation={toggleSimulation}
             onPhotoUpload={handlePhotoUpload}
             photoDataUrl={photoDataUrl}
             onJoinCampaign={joinCampaign}
