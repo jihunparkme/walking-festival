@@ -128,23 +128,16 @@ export default function App() {
   }
 
   function openLocationSettings() {
-    const candidates = [
-      "App-Prefs:root=LOCATION_SERVICES",
-      "App-Prefs:root=Privacy&path=LOCATION",
-      "android.settings.LOCATION_SOURCE_SETTINGS",
-      "chrome://settings/content/location",
-      "ms-settings:privacy-location",
-    ];
-
-    for (const candidate of candidates) {
-      try {
-        window.location.href = candidate;
-        return;
-      } catch {
-        // 일부 브라우저에서는 바로 열 수 없으므로 다음 후보로 넘어간다.
-      }
+    const ua = navigator.userAgent || navigator.vendor || window.opera;
+    if (/android/i.test(ua)) {
+      alert("안드로이드: 설정 > 앱 > 해당 앱 > 권한 > 위치에서 직접 허용해 주세요.");
+      return;
     }
-
+    if (/iPad|iPhone|iPod/.test(ua) || (navigator.userAgentData && navigator.userAgentData.platform === 'ios')) {
+      alert("iOS: 설정 > 개인정보 보호 및 보안 > 위치 서비스 > 브라우저(또는 앱)에서 위치 권한을 허용해 주세요.");
+      return;
+    }
+    // 데스크톱(크롬 등)만 지원 페이지로 연결
     window.open("https://support.google.com/chrome/answer/142065?hl=ko", "_blank", "noopener,noreferrer");
   }
 
