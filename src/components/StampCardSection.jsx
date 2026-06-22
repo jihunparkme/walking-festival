@@ -1,7 +1,6 @@
-import { stampItems } from "../data/stamps";
 import stampSeal from "../assets/stamp-seal.svg";
 
-export default function StampCardSection({ stamps, completedStamps, onStamp }) {
+export default function StampCardSection({ boothItems, stamps, completedStamps, onStamp }) {
   return (
     <section className="soft-card p-4 md:p-7">
       <div className="flex items-end justify-between">
@@ -9,11 +8,11 @@ export default function StampCardSection({ stamps, completedStamps, onStamp }) {
           <h2 className="text-xl font-bold">디지털 도장판</h2>
           <p className="mt-1 text-sm text-[#5b6c84]">부스를 방문하고 도장을 받아보세요.</p>
         </div>
-        <p className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">{completedStamps}/5 완료</p>
+        <p className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">{completedStamps}/{boothItems.length} 완료</p>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-        {stampItems.map((item) => {
+        {boothItems.map((item) => {
           const done = Boolean(stamps[item.id]);
           return (
             <button

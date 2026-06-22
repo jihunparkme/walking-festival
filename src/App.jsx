@@ -3,8 +3,8 @@ import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import StampCardSection from "./components/StampCardSection";
-import { stampItems } from "./data/stamps";
 import { getToken, registerOrLogin, saveToken } from "./lib/auth";
+import { fetchBooths } from "./lib/booths";
 
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
@@ -24,15 +24,20 @@ function readJSON(key, fallback) {
 export default function App() {
   const [tab, setTab] = useState("home");
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
+  const [boothItems, setBoothItems] = useState([]);
 
   const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
 
   const [participantId, setParticipantId] = useState(() => readJSON(STORAGE_KEYS.participantId, null));
 
   const completedStamps = useMemo(
-    () => stampItems.filter((item) => stamps[item.id]).length,
-    [stamps]
+    () => boothItems.filter((item) => stamps[item.id]).length,
+    [boothItems, stamps]
   );
+
+  useEffect(() => {
+    fetchBooths().then(setBoothItems).catch(console.error);
+  }, []);
 
   useEffect(() => {
     // 도장 상태를 자동 저장해 새로고침 이후에도 유지한다.
@@ -72,6 +77,7 @@ export default function App() {
 
         {tab === "stamp" && (
           <StampCardSection
+            boothItems={boothItems}
             stamps={stamps}
             completedStamps={completedStamps}
             onStamp={handleStamp}
