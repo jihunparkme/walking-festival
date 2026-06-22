@@ -1,17 +1,14 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import PasswordModal from "./components/PasswordModal";
 import StampCardSection from "./components/StampCardSection";
-import WalkCertifySection from "./components/WalkCertifySection";
 import { stampItems } from "./data/stamps";
 import { getToken, registerOrLogin, saveToken } from "./lib/auth";
 
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
-  steps: "walkingFestival.steps",
-  photo: "walkingFestival.photo",
   userToken: "walkingFestival.userToken",
 };
 
@@ -25,22 +22,9 @@ function readJSON(key, fallback) {
   }
 }
 
-function haversineMeters(prev, next) {
-  const toRad = (deg) => (deg * Math.PI) / 180;
-  const earthRadius = 6371000;
-  const dLat = toRad(next.latitude - prev.latitude);
-  const dLng = toRad(next.longitude - prev.longitude);
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos(toRad(prev.latitude)) * Math.cos(toRad(next.latitude)) * Math.sin(dLng / 2) ** 2;
-  return 2 * earthRadius * Math.asin(Math.sqrt(a));
-}
-
 export default function App() {
   const [tab, setTab] = useState("home");
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
-  const [steps, setSteps] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.steps) || 0));
-  const [photoDataUrl, setPhotoDataUrl] = useState(() => localStorage.getItem(STORAGE_KEYS.photo) || "");
 
   const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
 
@@ -48,12 +32,6 @@ export default function App() {
   const [selectedStamp, setSelectedStamp] = useState(null);
   const [passwordInput, setPasswordInput] = useState("");
   const [passwordError, setPasswordError] = useState("");
-
-  const [geoEnabled, setGeoEnabled] = useState(false);
-  const [geoStatus, setGeoStatus] = useState("위치 권한을 허용하면 실제 이동 기반 걸음 수가 기록됩니다.");
-
-  const previousPositionRef = useRef(null);
-  const watchIdRef = useRef(null);
 
   const completedStamps = useMemo(
     () => stampItems.filter((item) => stamps[item.id]).length,
@@ -64,19 +42,6 @@ export default function App() {
     // 도장 상태를 자동 저장해 새로고침 이후에도 유지한다.
     localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(stamps));
   }, [stamps]);
-
-  useEffect(() => {
-    // 누적 걸음 수를 기기 저장소에 동기화한다.
-    localStorage.setItem(STORAGE_KEYS.steps, String(steps));
-  }, [steps]);
-
-  useEffect(() => {
-    return () => {
-      if (watchIdRef.current !== null) {
-        navigator.geolocation.clearWatch(watchIdRef.current);
-      }
-    };
-  }, []);
 
   function openStampModal(stampId) {
     if (stamps[stampId]) return;
@@ -94,106 +59,6 @@ export default function App() {
     setStamps((prev) => ({ ...prev, [selectedStamp]: true }));
     setPasswordModalOpen(false);
     setSelectedStamp(null);
-  }
-
-  function openLocationSettings() {
-    const ua = navigator.userAgent || navigator.vendor || window.opera;
-    if (/android/i.test(ua)) {
-      alert("안드로이드: 설정 > 앱 > 해당 앱 > 권한 > 위치에서 직접 허용해 주세요.");
-      return;
-    }
-    if (/iPad|iPhone|iPod/.test(ua) || (navigator.userAgentData && navigator.userAgentData.platform === 'ios')) {
-      alert("iOS: 설정 > 개인정보 보호 및 보안 > 위치 서비스 > 브라우저(또는 앱)에서 위치 권한을 허용해 주세요.");
-      return;
-    }
-    // 데스크톱(크롬 등)만 지원 페이지로 연결
-    window.open("https://support.google.com/chrome/answer/142065?hl=ko", "_blank", "noopener,noreferrer");
-  }
-
-  function startGeolocation() {
-    if (!navigator.geolocation) {
-      setGeoStatus("이 브라우저에서는 위치 기능을 지원하지 않습니다. 시뮬레이션 모드를 사용해 주세요.");
-      return;
-    }
-    if (watchIdRef.current !== null) {
-      setGeoStatus("이미 위치 측정 중입니다.");
-      return;
-    }
-
-    watchIdRef.current = navigator.geolocation.watchPosition(
-      (position) => {
-        setGeoEnabled(true);
-        setGeoStatus("실시간 이동을 추적하는 중입니다.");
-
-        const current = {
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
-        };
-
-        // 위치 좌표 간 실제 거리(m)를 걸음 수로 변환해 누적 저장한다.
-        if (previousPositionRef.current) {
-          const distance = haversineMeters(previousPositionRef.current, current);
-          const stepIncrement = Math.floor(distance / 0.75);
-          if (stepIncrement > 0) {
-            setSteps((prev) => prev + stepIncrement);
-          }
-        }
-        previousPositionRef.current = current;
-      },
-      (error) => {
-        if (watchIdRef.current !== null) {
-          navigator.geolocation.clearWatch(watchIdRef.current);
-          watchIdRef.current = null;
-        }
-
-        setGeoEnabled(false);
-
-        if (error.code === 1) {
-          setGeoStatus("위치 권한이 거부되었습니다. 아래 버튼으로 기기/브라우저 설정에서 위치 권한을 다시 허용해 주세요.");
-          return;
-        }
-
-        if (error.code === 2) {
-          setGeoStatus("현재 위치를 확인할 수 없습니다. 잠시 후 다시 시도해 주세요.");
-          return;
-        }
-
-        if (error.code === 3) {
-          setGeoStatus("위치 확인 시간이 초과되었습니다. 다시 시도해 주세요.");
-          return;
-        }
-
-        setGeoStatus("위치 측정을 시작할 수 없습니다. 시뮬레이션 모드를 사용해 주세요.");
-      },
-      {
-        enableHighAccuracy: true,
-        maximumAge: 1000,
-        timeout: 10000,
-      }
-    );
-  }
-
-  function stopGeolocation() {
-    if (watchIdRef.current !== null) {
-      navigator.geolocation.clearWatch(watchIdRef.current);
-      watchIdRef.current = null;
-      previousPositionRef.current = null;
-      setGeoStatus("위치 추적을 중지했습니다.");
-    }
-  }
-
-  function handlePhotoUpload(event) {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // 업로드 이미지를 Data URL로 변환해 재접속 후에도 localStorage로 복원한다.
-    const reader = new FileReader();
-    reader.onload = () => {
-      const result = String(reader.result || "");
-      setPhotoDataUrl(result);
-      localStorage.setItem(STORAGE_KEYS.photo, result);
-    };
-    reader.readAsDataURL(file);
   }
 
   async function handleLoginSubmit({ name, phone }) {
@@ -225,19 +90,6 @@ export default function App() {
             stamps={stamps}
             completedStamps={completedStamps}
             onOpenStampModal={openStampModal}
-          />
-        )}
-
-        {tab === "walk" && (
-          <WalkCertifySection
-            steps={steps}
-            geoStatus={geoStatus}
-            geoEnabled={geoEnabled}
-            onStartGeolocation={startGeolocation}
-            onOpenLocationSettings={openLocationSettings}
-            onStopGeolocation={stopGeolocation}
-            onPhotoUpload={handlePhotoUpload}
-            photoDataUrl={photoDataUrl}
           />
         )}
       </main>
