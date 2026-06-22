@@ -162,8 +162,28 @@ function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
   );
 }
 
-export default function LoginModal({ open, onSubmit }) {
-  const [step, setStep] = useState("input"); // "input" | "confirm"
+// 등록 완료 단계
+function DoneStep({ onClose }) {
+  return (
+    <div className="flex flex-col items-center py-4 text-center">
+      <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f4] text-4xl">
+        🎉
+      </div>
+      <h3 className="mt-4 text-lg font-extrabold">등록이 완료되었습니다!</h3>
+      <p className="mt-2 text-sm text-[#5f6f88]">캠페인 참여가 확정되었습니다. 즐거운 걷기 되세요.</p>
+      <button
+        type="button"
+        onClick={onClose}
+        className="mt-6 w-full rounded-full bg-[#ff99bb] py-2.5 text-sm font-bold text-white"
+      >
+        시작하기
+      </button>
+    </div>
+  );
+}
+
+export default function LoginModal({ open, onSubmit, onClose }) {
+  const [step, setStep] = useState("input"); // "input" | "confirm" | "done"
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [agreed, setAgreed] = useState(false);
@@ -188,6 +208,7 @@ export default function LoginModal({ open, onSubmit }) {
     setSubmitError("");
     try {
       await onSubmit({ name: name.trim(), phone: phone.trim() });
+      setStep("done");
     } catch (err) {
       setSubmitError(err.message || "오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
@@ -211,7 +232,7 @@ export default function LoginModal({ open, onSubmit }) {
             onChange={handleFieldChange}
             onNext={handleNext}
           />
-        ) : (
+        ) : step === "confirm" ? (
           <ConfirmStep
             name={name.trim()}
             phone={phone.trim()}
@@ -220,6 +241,8 @@ export default function LoginModal({ open, onSubmit }) {
             onConfirm={handleConfirm}
             onBack={handleBack}
           />
+        ) : (
+          <DoneStep onClose={onClose} />
         )}
       </div>
     </div>
