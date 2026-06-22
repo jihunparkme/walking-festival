@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
+import LoginModal from "./components/LoginModal";
 import PasswordModal from "./components/PasswordModal";
 import StampCardSection from "./components/StampCardSection";
 import WalkCertifySection from "./components/WalkCertifySection";
@@ -12,6 +13,7 @@ const STORAGE_KEYS = {
   entryNumber: "walkingFestival.entryNumber",
   issuedEntryNumbers: "walkingFestival.issuedEntryNumbers",
   photo: "walkingFestival.photo",
+  userToken: "walkingFestival.userToken",
 };
 
 const ADMIN_PASSWORD = "1234";
@@ -63,6 +65,8 @@ export default function App() {
   const [steps, setSteps] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.steps) || 0));
   const [entryNumber, setEntryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.entryNumber) || "");
   const [photoDataUrl, setPhotoDataUrl] = useState(() => localStorage.getItem(STORAGE_KEYS.photo) || "");
+
+  const [loginModalOpen, setLoginModalOpen] = useState(() => !localStorage.getItem(STORAGE_KEYS.userToken));
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedStamp, setSelectedStamp] = useState(null);
@@ -234,6 +238,12 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.entryNumber, generated);
   }
 
+  function handleLoginSubmit({ name, nickname, phone }) {
+    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    localStorage.setItem(STORAGE_KEYS.userToken, JSON.stringify({ token, name, nickname, phone }));
+    setLoginModalOpen(false);
+  }
+
   return (
     <div className="min-h-screen pb-28 text-ink">
       <header className="mx-auto w-full max-w-[30rem] px-4 pt-6 md:max-w-4xl md:px-6">
@@ -286,6 +296,8 @@ export default function App() {
         onCancel={() => setPasswordModalOpen(false)}
         onSubmit={submitStampPassword}
       />
+
+      <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} />
     </div>
   );
 }
