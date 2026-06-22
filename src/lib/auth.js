@@ -13,7 +13,7 @@ const TOKEN_COOKIE_DAYS = 180;
 export async function registerOrLogin(name, phone) {
   const { data: existing, error: fetchError } = await supabase
     .from("participants")
-    .select("name, token")
+    .select("name, token, id")
     .eq("phone", phone)
     .maybeSingle();
 
@@ -24,19 +24,19 @@ export async function registerOrLogin(name, phone) {
     if (existing.name !== name) {
       throw new Error("입력하신 이름이 기존 등록 정보와 일치하지 않습니다.");
     }
-    return { token: existing.token, isNew: false };
+    return { token: existing.token, participantId: existing.id, isNew: false };
   }
 
   // 신규 사용자
   const { data: inserted, error: insertError } = await supabase
     .from("participants")
     .insert({ name, phone })
-    .select("token")
+    .select("id, token")
     .single();
 
   if (insertError) throw new Error("참여자 등록 중 오류가 발생했습니다.");
 
-  return { token: inserted.token, isNew: true };
+  return { token: inserted.token, participantId: inserted.id, isNew: true };
 }
 
 /** 토큰을 localStorage 와 Cookie 에 함께 저장 */

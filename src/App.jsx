@@ -10,6 +10,7 @@ import { getToken, registerOrLogin, saveToken } from "./lib/auth";
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
   userToken: "walkingFestival.userToken",
+  participantId: "walkingFestival.participantId",
 };
 
 const ADMIN_PASSWORD = "1234";
@@ -27,6 +28,8 @@ export default function App() {
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
 
   const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
+
+  const [participantId, setParticipantId] = useState(() => readJSON(STORAGE_KEYS.participantId, null));
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedStamp, setSelectedStamp] = useState(null);
@@ -62,9 +65,11 @@ export default function App() {
   }
 
   async function handleLoginSubmit({ name, phone }) {
-    const { token } = await registerOrLogin(name, phone);
+    const { token, participantId: newParticipantId, isNew } = await registerOrLogin(name, phone);
     saveToken(token);
-    setLoginModalOpen(false);
+    localStorage.setItem(STORAGE_KEYS.participantId, JSON.stringify(newParticipantId));
+    setParticipantId(newParticipantId);
+    return { participantId: newParticipantId, isNew };
   }
 
   return (
@@ -83,7 +88,7 @@ export default function App() {
       </header>
 
       <main className="mx-auto mt-6 w-full max-w-[30rem] space-y-6 px-4 md:max-w-4xl md:px-6">
-        {tab === "home" && <HomeSection />}
+        {tab === "home" && <HomeSection participantId={participantId} />}
 
         {tab === "stamp" && (
           <StampCardSection
@@ -105,7 +110,7 @@ export default function App() {
         onSubmit={submitStampPassword}
       />
 
-      <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} />
+      <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} onClose={() => setLoginModalOpen(false)} />
     </div>
   );
 }

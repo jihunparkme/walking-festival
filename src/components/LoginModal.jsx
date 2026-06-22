@@ -163,7 +163,7 @@ function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
 }
 
 // 등록 완료 단계
-function DoneStep({ onClose }) {
+function DoneStep({ lotteryNumber, onClose }) {
   return (
     <div className="flex flex-col items-center py-4 text-center">
       <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#fff0f4] text-4xl">
@@ -171,6 +171,13 @@ function DoneStep({ onClose }) {
       </div>
       <h3 className="mt-4 text-lg font-extrabold">등록이 완료되었습니다!</h3>
       <p className="mt-2 text-sm text-[#5f6f88]">캠페인 참여가 확정되었습니다. 즐거운 걷기 되세요.</p>
+      {lotteryNumber && (
+        <div className="mt-4 w-full rounded-2xl bg-[#fff0f4] px-4 py-3">
+          <p className="text-xs font-semibold text-[#5f6f88]">나의 추첨번호</p>
+          <p className="mt-1 text-2xl font-extrabold tracking-widest text-[#ff99bb]">{lotteryNumber}</p>
+          <p className="mt-1 text-xs text-[#8a9ab5]">축제 소개 페이지에서 확인하실 수 있습니다.</p>
+        </div>
+      )}
       <button
         type="button"
         onClick={onClose}
@@ -189,6 +196,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [lotteryNumber, setLotteryNumber] = useState("");
 
   if (!open) return null;
 
@@ -207,8 +215,13 @@ export default function LoginModal({ open, onSubmit, onClose }) {
     setLoading(true);
     setSubmitError("");
     try {
-      await onSubmit({ name: name.trim(), phone: phone.trim() });
-      setStep("done");
+      const { participantId, isNew } = await onSubmit({ name: name.trim(), phone: phone.trim() });
+      if (isNew) {
+        setLotteryNumber(String(participantId).padStart(6, "0"));
+        setStep("done");
+      } else {
+        onClose();
+      }
     } catch (err) {
       setSubmitError(err.message || "오류가 발생했습니다. 다시 시도해 주세요.");
     } finally {
@@ -242,7 +255,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
             onBack={handleBack}
           />
         ) : (
-          <DoneStep onClose={onClose} />
+          <DoneStep lotteryNumber={lotteryNumber} onClose={onClose} />
         )}
       </div>
     </div>
