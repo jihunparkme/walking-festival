@@ -6,12 +6,11 @@ import PasswordModal from "./components/PasswordModal";
 import StampCardSection from "./components/StampCardSection";
 import WalkCertifySection from "./components/WalkCertifySection";
 import { stampItems } from "./data/stamps";
+import { getToken, registerOrLogin, saveToken } from "./lib/auth";
 
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
   steps: "walkingFestival.steps",
-  entryNumber: "walkingFestival.entryNumber",
-  issuedEntryNumbers: "walkingFestival.issuedEntryNumbers",
   photo: "walkingFestival.photo",
   userToken: "walkingFestival.userToken",
 };
@@ -37,36 +36,13 @@ function haversineMeters(prev, next) {
   return 2 * earthRadius * Math.asin(Math.sqrt(a));
 }
 
-function generateUniqueEntryNumber() {
-  const issuedNumbers = new Set(readJSON(STORAGE_KEYS.issuedEntryNumbers, []));
-  let generated = "";
-  let attempts = 0;
-
-  do {
-    generated = String(Math.floor(100000 + Math.random() * 900000));
-    attempts += 1;
-  } while (issuedNumbers.has(generated) && attempts < 5000);
-
-  // 충돌이 반복되면 시간 기반 번호로 대체해 중복 발급을 방지한다.
-  if (issuedNumbers.has(generated)) {
-    generated = `${Date.now()}${Math.floor(Math.random() * 1000)
-      .toString()
-      .padStart(3, "0")}`;
-  }
-
-  issuedNumbers.add(generated);
-  localStorage.setItem(STORAGE_KEYS.issuedEntryNumbers, JSON.stringify([...issuedNumbers]));
-  return generated;
-}
-
 export default function App() {
   const [tab, setTab] = useState("home");
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
   const [steps, setSteps] = useState(() => Number(localStorage.getItem(STORAGE_KEYS.steps) || 0));
-  const [entryNumber, setEntryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.entryNumber) || "");
   const [photoDataUrl, setPhotoDataUrl] = useState(() => localStorage.getItem(STORAGE_KEYS.photo) || "");
 
-  const [loginModalOpen, setLoginModalOpen] = useState(() => !localStorage.getItem(STORAGE_KEYS.userToken));
+  const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
 
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [selectedStamp, setSelectedStamp] = useState(null);
@@ -93,17 +69,6 @@ export default function App() {
     // 누적 걸음 수를 기기 저장소에 동기화한다.
     localStorage.setItem(STORAGE_KEYS.steps, String(steps));
   }, [steps]);
-
-  useEffect(() => {
-    if (!entryNumber) return;
-
-    // 기존 사용자 번호도 중복 방지 목록에 포함해 이후 재발급 충돌을 줄인다.
-    const issuedNumbers = new Set(readJSON(STORAGE_KEYS.issuedEntryNumbers, []));
-    if (!issuedNumbers.has(entryNumber)) {
-      issuedNumbers.add(entryNumber);
-      localStorage.setItem(STORAGE_KEYS.issuedEntryNumbers, JSON.stringify([...issuedNumbers]));
-    }
-  }, [entryNumber]);
 
   useEffect(() => {
     return () => {
@@ -231,16 +196,9 @@ export default function App() {
     reader.readAsDataURL(file);
   }
 
-  function joinCampaign() {
-    if (entryNumber) return;
-    const generated = generateUniqueEntryNumber();
-    setEntryNumber(generated);
-    localStorage.setItem(STORAGE_KEYS.entryNumber, generated);
-  }
-
-  function handleLoginSubmit({ name, nickname, phone }) {
-    const token = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-    localStorage.setItem(STORAGE_KEYS.userToken, JSON.stringify({ token, name, nickname, phone }));
+  async function handleLoginSubmit({ name, phone }) {
+    const { token } = await registerOrLogin(name, phone);
+    saveToken(token);
     setLoginModalOpen(false);
   }
 
@@ -272,7 +230,6 @@ export default function App() {
 
         {tab === "walk" && (
           <WalkCertifySection
-            entryNumber={entryNumber}
             steps={steps}
             geoStatus={geoStatus}
             geoEnabled={geoEnabled}
@@ -281,7 +238,6 @@ export default function App() {
             onStopGeolocation={stopGeolocation}
             onPhotoUpload={handlePhotoUpload}
             photoDataUrl={photoDataUrl}
-            onJoinCampaign={joinCampaign}
           />
         )}
       </main>

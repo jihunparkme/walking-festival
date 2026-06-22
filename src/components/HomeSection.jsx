@@ -9,7 +9,9 @@ export default function HomeSection() {
           <h2 className="text-xl font-bold">축제 안내</h2>
           <p className="mt-3 leading-relaxed text-[#4e5f75]">
             세계자살예방의 날을 맞아, 안양 시민이 함께 걷고 소통하며 생명존중 문화를 확산하는 캠페인입니다.
+            <br/>
             5개 미션 부스를 체험하고 완보 인증까지 완료하면 추첨 이벤트에 참여할 수 있습니다.
+            <br/>
           </p>
         </div>
         <div className="rounded-bubble bg-skyMint p-4">
