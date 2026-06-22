@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
-import PasswordModal from "./components/PasswordModal";
 import StampCardSection from "./components/StampCardSection";
 import { stampItems } from "./data/stamps";
 import { getToken, registerOrLogin, saveToken } from "./lib/auth";
@@ -13,7 +12,6 @@ const STORAGE_KEYS = {
   participantId: "walkingFestival.participantId",
 };
 
-const ADMIN_PASSWORD = "1234";
 function readJSON(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -31,11 +29,6 @@ export default function App() {
 
   const [participantId, setParticipantId] = useState(() => readJSON(STORAGE_KEYS.participantId, null));
 
-  const [passwordModalOpen, setPasswordModalOpen] = useState(false);
-  const [selectedStamp, setSelectedStamp] = useState(null);
-  const [passwordInput, setPasswordInput] = useState("");
-  const [passwordError, setPasswordError] = useState("");
-
   const completedStamps = useMemo(
     () => stampItems.filter((item) => stamps[item.id]).length,
     [stamps]
@@ -46,22 +39,9 @@ export default function App() {
     localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(stamps));
   }, [stamps]);
 
-  function openStampModal(stampId) {
+  function handleStamp(stampId) {
     if (stamps[stampId]) return;
-    setSelectedStamp(stampId);
-    setPasswordInput("");
-    setPasswordError("");
-    setPasswordModalOpen(true);
-  }
-
-  function submitStampPassword() {
-    if (passwordInput !== ADMIN_PASSWORD) {
-      setPasswordError("비밀번호가 올바르지 않습니다.");
-      return;
-    }
-    setStamps((prev) => ({ ...prev, [selectedStamp]: true }));
-    setPasswordModalOpen(false);
-    setSelectedStamp(null);
+    setStamps((prev) => ({ ...prev, [stampId]: true }));
   }
 
   async function handleLoginSubmit({ name, phone }) {
@@ -94,21 +74,12 @@ export default function App() {
           <StampCardSection
             stamps={stamps}
             completedStamps={completedStamps}
-            onOpenStampModal={openStampModal}
+            onStamp={handleStamp}
           />
         )}
       </main>
 
       <BottomNav tab={tab} onChangeTab={setTab} />
-
-      <PasswordModal
-        open={passwordModalOpen}
-        value={passwordInput}
-        error={passwordError}
-        onChange={setPasswordInput}
-        onCancel={() => setPasswordModalOpen(false)}
-        onSubmit={submitStampPassword}
-      />
 
       <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} onClose={() => setLoginModalOpen(false)} />
     </div>

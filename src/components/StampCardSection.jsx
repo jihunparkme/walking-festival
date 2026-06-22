@@ -1,13 +1,13 @@
 import { stampItems } from "../data/stamps";
 import stampSeal from "../assets/stamp-seal.svg";
 
-export default function StampCardSection({ stamps, completedStamps, onOpenStampModal }) {
+export default function StampCardSection({ stamps, completedStamps, onStamp }) {
   return (
     <section className="soft-card p-4 md:p-7">
       <div className="flex items-end justify-between">
         <div>
           <h2 className="text-xl font-bold">디지털 도장판</h2>
-          <p className="mt-1 text-sm text-[#5b6c84]">관리자 비밀번호 확인 후 도장이 찍힙니다.</p>
+          <p className="mt-1 text-sm text-[#5b6c84]">부스를 방문하고 도장을 받아보세요.</p>
         </div>
         <p className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">{completedStamps}/5 완료</p>
       </div>
@@ -19,7 +19,7 @@ export default function StampCardSection({ stamps, completedStamps, onOpenStampM
             <button
               key={item.id}
               type="button"
-              onClick={() => onOpenStampModal(item.id)}
+              onClick={() => onStamp(item.id)}
               className={`relative overflow-hidden rounded-3xl border-2 p-4 text-left transition ${
                 done
                   ? "border-transparent bg-candyPink/70"
