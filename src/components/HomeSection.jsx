@@ -1,3 +1,6 @@
+import org1 from "../assets/images/org_1.jpeg";
+import org2 from "../assets/images/org_2.jpeg";
+
 export default function HomeSection() {
   return (
     <section className="soft-card space-y-5 p-4 md:p-7">
@@ -13,18 +16,14 @@ export default function HomeSection() {
           <p className="text-sm font-semibold text-[#546378]">협력기관</p>
           <div className="mt-3 space-y-3">
             <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
-              <span className="inline-flex h-10 w-10 animate-bob items-center justify-center rounded-full bg-candyPink font-bold">
-                A
-              </span>
+              <img src={org1} alt="안양월드휴먼브리지" className="h-10 w-10 animate-bob rounded-full object-cover" />
               <div>
                 <p className="text-sm font-bold">안양월드휴먼브리지</p>
                 <p className="text-xs text-[#60718a]">생명사랑 네트워크 파트너</p>
               </div>
             </div>
             <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
-              <span className="inline-flex h-10 w-10 animate-bob items-center justify-center rounded-full bg-creamSun font-bold">
-                Y
-              </span>
+              <img src={org2} alt="율목종합사회복지관" className="h-10 w-10 animate-bob rounded-full object-cover" />
               <div>
                 <p className="text-sm font-bold">율목종합사회복지관</p>
                 <p className="text-xs text-[#60718a]">지역사회 연계 협력기관</p>
