@@ -206,7 +206,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
     else if (field === "agreed") setAgreed(value);
   }
 
-  function handleNext(data) {
+  function handleNext() {
     setSubmitError("");
     setStep("confirm");
   }
