@@ -1,11 +1,22 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ participantId }) {
+export default function HomeSection({ participantId, participantName }) {
   const lotteryNumber = participantId ? String(participantId).padStart(6, "0") : null;
 
   return (
     <>
+      {participantName && (
+        <section className="soft-card flex items-center gap-3 px-5 py-4">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-candyPink/60 text-xl">
+            👋
+          </div>
+          <p className="text-base font-bold text-[#1a2a3a]">
+            {participantName}님, 환영합니다!
+            <br/><span className="text-sm font-normal text-[#5b6c84]">오늘도 따뜻한 걸음 함께해요.</span>
+          </p>
+        </section>
+      )}
       <section className="soft-card space-y-5 p-4 md:p-7">
         <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
           <div>

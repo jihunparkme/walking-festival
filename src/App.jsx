@@ -3,13 +3,16 @@ import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import StampCardSection from "./components/StampCardSection";
+import StampScanPage from "./components/StampScanPage";
 import { getToken, registerOrLogin, saveToken } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
+import { fetchMyStamps } from "./lib/stamps";
 
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
   userToken: "walkingFestival.userToken",
   participantId: "walkingFestival.participantId",
+  name: "walkingFestival.name",
 };
 
 function readJSON(key, fallback) {
@@ -21,14 +24,24 @@ function readJSON(key, fallback) {
   }
 }
 
+// /stamp?booth=xxx URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
+const urlParams = new URLSearchParams(window.location.search);
+const URL_BOOTH_ID = window.location.pathname === "/stamp" ? urlParams.get("booth") : null;
+
 export default function App() {
-  const [tab, setTab] = useState("home");
+  const [tab, setTab] = useState(() => {
+    const hash = window.location.hash.replace("#", "");
+    return hash === "stamp" ? "stamp" : "home";
+  });
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
   const [boothItems, setBoothItems] = useState([]);
-
+  const [token, setToken] = useState(() => getToken());
   const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
-
   const [participantId, setParticipantId] = useState(() => readJSON(STORAGE_KEYS.participantId, null));
+  const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
+
+  // QR 스캔 오버레이 표시 여부
+  const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID));
 
   const completedStamps = useMemo(
     () => boothItems.filter((item) => stamps[item.id]).length,
@@ -39,22 +52,44 @@ export default function App() {
     fetchBooths().then(setBoothItems).catch(console.error);
   }, []);
 
+  // 참여자 ID가 확정되면 서버에서 도장 현황을 가져와 동기화한다.
   useEffect(() => {
-    // 도장 상태를 자동 저장해 새로고침 이후에도 유지한다.
-    localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(stamps));
-  }, [stamps]);
-
-  function handleStamp(stampId) {
-    if (stamps[stampId]) return;
-    setStamps((prev) => ({ ...prev, [stampId]: true }));
-  }
+    if (!participantId) return;
+    fetchMyStamps(participantId)
+      .then((serverStamps) => {
+        setStamps(serverStamps);
+        localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(serverStamps));
+      })
+      .catch(console.error);
+  }, [participantId]);
 
   async function handleLoginSubmit({ name, phone }) {
-    const { token, participantId: newParticipantId, isNew } = await registerOrLogin(name, phone);
-    saveToken(token);
+    const { token: newToken, participantId: newParticipantId, isNew } = await registerOrLogin(name, phone);
+    saveToken(newToken);
+    setToken(newToken);
+    setParticipantName(name);
+    localStorage.setItem(STORAGE_KEYS.name, name);
     localStorage.setItem(STORAGE_KEYS.participantId, JSON.stringify(newParticipantId));
     setParticipantId(newParticipantId);
     return { participantId: newParticipantId, isNew };
+  }
+
+  function handleChangeTab(nextTab) {
+    setTab(nextTab);
+    window.history.replaceState(null, "", `#${nextTab}`);
+  }
+
+  function handleStampDone({ status, boothId }) {
+    if (status === "success" && boothId) {
+      setStamps((prev) => {
+        const next = { ...prev, [boothId]: true };
+        localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
+        return next;
+      });
+    }
+    setShowStampScan(false);
+    window.history.replaceState({}, "", "/");
+    handleChangeTab("stamp");
   }
 
   return (
@@ -73,19 +108,28 @@ export default function App() {
       </header>
 
       <main className="mx-auto mt-6 w-full max-w-[30rem] space-y-6 px-4 md:max-w-4xl md:px-6">
-        {tab === "home" && <HomeSection participantId={participantId} />}
+        {tab === "home" && <HomeSection participantId={participantId} participantName={participantName} />}
 
         {tab === "stamp" && (
           <StampCardSection
             boothItems={boothItems}
             stamps={stamps}
             completedStamps={completedStamps}
-            onStamp={handleStamp}
           />
         )}
       </main>
 
-      <BottomNav tab={tab} onChangeTab={setTab} />
+      <BottomNav tab={tab} onChangeTab={handleChangeTab} />
+
+      {/* QR 스캔 오버레이 — /stamp?booth=xxx 로 접근 시 표시 */}
+      {showStampScan && URL_BOOTH_ID && (
+        <StampScanPage
+          boothId={URL_BOOTH_ID}
+          boothTitle={boothItems.find((b) => b.id === URL_BOOTH_ID)?.title}
+          token={token}
+          onDone={handleStampDone}
+        />
+      )}
 
       <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} onClose={() => setLoginModalOpen(false)} />
     </div>
