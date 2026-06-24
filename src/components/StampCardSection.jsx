@@ -14,10 +14,10 @@ export default function StampCardSection({ boothItems, stamps, completedStamps }
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
         {boothItems.map((item) => {
-          const done = Boolean(stamps[item.id]);
+          const done = Boolean(stamps[item.booth_id]);
           return (
             <div
-              key={item.id}
+              key={item.booth_id}
               className={`relative overflow-hidden rounded-3xl border-2 p-4 ${
                 done
                   ? "border-transparent bg-candyPink/70"

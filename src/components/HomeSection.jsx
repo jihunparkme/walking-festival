@@ -1,7 +1,7 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ participantId, participantName }) {
+export default function HomeSection({ participantId, participantName, onAdminClick }) {
   const lotteryNumber = participantId ? String(participantId).padStart(6, "0") : null;
 
   return (
@@ -59,6 +59,16 @@ export default function HomeSection({ participantId, participantName }) {
           </div>
         </section>
       )}
+
+      <div className="flex justify-center pb-2">
+        <button
+          type="button"
+          onClick={onAdminClick}
+          className="text-[10px] text-[#b0bdd0] hover:text-[#8a9ab5] underline"
+        >
+          관리자
+        </button>
+      </div>
     </>
   );
 }
