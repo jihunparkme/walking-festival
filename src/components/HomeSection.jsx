@@ -1,8 +1,7 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ participantId, participantName, onAdminClick }) {
-  const lotteryNumber = participantId ? String(participantId).padStart(6, "0") : null;
+export default function HomeSection({ lotteryNumber, participantName, onAdminClick }) {
 
   return (
     <>

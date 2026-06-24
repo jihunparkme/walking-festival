@@ -29,6 +29,11 @@ function formatPhone(s) {
   return null;
 }
 
+/** PostgREST .or() 필터에서 구조 조작 가능한 특수문자 제거 */
+function escapeFilter(s) {
+  return s.replace(/[%(),]/g, "");
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -39,6 +44,51 @@ export default defineConfig(({ mode }) => {
       {
         name: "local-stamp-api",
         configureServer(server) {
+          // GET /api/stamps — token으로 도장 조회
+          server.middlewares.use("/api/stamps", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "GET") {
+              res.statusCode = 405;
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+
+            const token = (req.headers.authorization ?? "").replace(/^Bearer\s+/i, "");
+            if (!token) {
+              res.statusCode = 401;
+              res.end(JSON.stringify({ error: "토큰이 필요합니다." }));
+              return;
+            }
+
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+
+            const { data: participant, error: pError } = await supabase
+              .from("participants")
+              .select("id")
+              .eq("token", token)
+              .maybeSingle();
+
+            if (pError || !participant) {
+              res.statusCode = 401;
+              res.end(JSON.stringify({ error: "유효하지 않은 토큰입니다." }));
+              return;
+            }
+
+            const { data, error } = await supabase
+              .from("stamp_records")
+              .select("booth_id")
+              .eq("participant_id", participant.id);
+
+            if (error) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: "도장 정보를 불러오는 중 오류가 발생했습니다." }));
+              return;
+            }
+
+            const stamps = (data ?? []).reduce((acc, r) => ({ ...acc, [r.booth_id]: true }), {});
+            res.statusCode = 200;
+            res.end(JSON.stringify({ stamps }));
+          });
           server.middlewares.use("/api/stamp", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
 
@@ -160,7 +210,8 @@ export default defineConfig(({ mode }) => {
 
             if (search.trim()) {
               const s = search.trim();
-              const filters = [`name.ilike.%${s}%`, `phone.ilike.%${s}%`];
+              const safe = escapeFilter(s);
+              const filters = [`name.ilike.%${safe}%`, `phone.ilike.%${safe}%`];
               const formatted = formatPhone(s);
               if (formatted) filters.push(`phone.ilike.%${formatted}%`);
               query = query.or(filters.join(","));

@@ -13,7 +13,7 @@ import { fetchMyStamps } from "./lib/stamps";
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
   userToken: "walkingFestival.userToken",
-  participantId: "walkingFestival.participantId",
+  lotteryNumber: "walkingFestival.lotteryNumber",
   name: "walkingFestival.name",
 };
 
@@ -44,7 +44,7 @@ export default function App() {
   const [boothItems, setBoothItems] = useState([]);
   const [token, setToken] = useState(() => getToken());
   const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
-  const [participantId, setParticipantId] = useState(() => readJSON(STORAGE_KEYS.participantId, null));
+  const [lotteryNumber, setLotteryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.lotteryNumber) || "");
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
   // QR 스캔 오버레이 표시 여부
@@ -61,16 +61,16 @@ export default function App() {
     fetchBooths().then(setBoothItems).catch(console.error);
   }, []);
 
-  // 참여자 ID가 확정되면 서버에서 도장 현황을 가져와 동기화한다.
+  // 토큰이 확정되면 서버에서 도장 현황을 가져와 동기화한다.
   useEffect(() => {
-    if (!participantId) return;
-    fetchMyStamps(participantId)
+    if (!token) return;
+    fetchMyStamps(token)
       .then((serverStamps) => {
         setStamps(serverStamps);
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(serverStamps));
       })
       .catch(console.error);
-  }, [participantId]);
+  }, [token]);
 
   async function handleLoginSubmit({ name, phone }) {
     const { token: newToken, participantId: newParticipantId, isNew } = await registerOrLogin(name, phone);
@@ -78,8 +78,9 @@ export default function App() {
     setToken(newToken);
     setParticipantName(name);
     localStorage.setItem(STORAGE_KEYS.name, name);
-    localStorage.setItem(STORAGE_KEYS.participantId, JSON.stringify(newParticipantId));
-    setParticipantId(newParticipantId);
+    const newLotteryNumber = String(newParticipantId).padStart(6, "0");
+    localStorage.setItem(STORAGE_KEYS.lotteryNumber, newLotteryNumber);
+    setLotteryNumber(newLotteryNumber);
     return { participantId: newParticipantId, isNew };
   }
 
@@ -125,7 +126,7 @@ export default function App() {
           <main className="mx-auto mt-6 w-full max-w-[30rem] space-y-6 px-4 md:max-w-4xl md:px-6">
             {tab === "home" && (
               <HomeSection
-                participantId={participantId}
+                lotteryNumber={lotteryNumber}
                 participantName={participantName}
                 onAdminClick={() => setAdminPasswordOpen(true)}
               />

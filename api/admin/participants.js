@@ -16,7 +16,10 @@ function checkAdmin(req, res) {
   return true;
 }
 
-/** 숫자만 입력했을 때 하이픈 포함 형식으로 변환 */
+/** PostgREST .or() 필터에서 특수문자 이스케이프 */
+function escapeFilter(s) {
+  return s.replace(/[%(),]/g, "");
+}
 function formatPhone(s) {
   const d = s.replace(/\D/g, "");
   if (d.length === 11) return `${d.slice(0, 3)}-${d.slice(3, 7)}-${d.slice(7)}`;
@@ -40,7 +43,8 @@ export default async function handler(req, res) {
       .range(from, from + PAGE_SIZE - 1);
 
     if (s) {
-      const filters = [`name.ilike.%${s}%`, `phone.ilike.%${s}%`];
+      const safe = escapeFilter(s);
+      const filters = [`name.ilike.%${safe}%`, `phone.ilike.%${safe}%`];
       const formatted = formatPhone(s);
       if (formatted) filters.push(`phone.ilike.%${formatted}%`);
       query = query.or(filters.join(","));
