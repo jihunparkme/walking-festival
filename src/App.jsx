@@ -28,6 +28,11 @@ function readJSON(key, fallback) {
 const urlParams = new URLSearchParams(window.location.search);
 const URL_BOOTH_ID = window.location.pathname === "/stamp" ? urlParams.get("booth") : null;
 
+// booth 파라미터를 즉시 제거해 주소창에서 URL을 복사·공유하지 못하도록 한다.
+if (URL_BOOTH_ID) {
+  window.history.replaceState({}, "", "/");
+}
+
 export default function App() {
   const [tab, setTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
