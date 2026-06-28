@@ -125,6 +125,7 @@ function ParticipantsTab() {
                 <th className="px-3 py-2.5">No.</th>
                 <th className="px-3 py-2.5">이름</th>
                 <th className="px-3 py-2.5">전화번호</th>
+                <th className="px-3 py-2.5 text-center">추첨번호</th>
                 {showStart && <th className="px-3 py-2.5 text-center">시작점</th>}
                 {showReturn && <th className="px-3 py-2.5 text-center">반환점</th>}
                 {showComplete && <th className="px-3 py-2.5 text-center">완주</th>}
@@ -138,6 +139,9 @@ function ParticipantsTab() {
                   </td>
                   <td className="px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
                   <td className="px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
+                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#ff99bb]">
+                    {String(row.id).padStart(6, "0")}
+                  </td>
                   {showStart && (
                     <td className="px-3 py-2.5 text-center">
                       <BoolBadge value={getBoolVal(row, "start_done", "is_start")} />
