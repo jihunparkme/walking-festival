@@ -101,7 +101,10 @@ export default function App() {
     setLotteryNumber(newLotteryNumber);
     localStorage.setItem(STORAGE_KEYS.name, name);
     localStorage.setItem(STORAGE_KEYS.lotteryNumber, newLotteryNumber);
-    setAuthStatus("ok");
+    // isNew인 경우 DoneStep을 보여준 뒤 onClose에서 닫히므로 여기서 바로 닫지 않음
+    if (!isNew) {
+      setAuthStatus("ok");
+    }
     return { isNew, lotteryNumber: newLotteryNumber };
   }
 
