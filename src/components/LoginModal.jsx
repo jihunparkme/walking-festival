@@ -215,9 +215,9 @@ export default function LoginModal({ open, onSubmit, onClose }) {
     setLoading(true);
     setSubmitError("");
     try {
-      const { participantId, isNew } = await onSubmit({ name: name.trim(), phone: phone.trim() });
+      const { isNew, lotteryNumber: newLotteryNumber } = await onSubmit({ name: name.trim(), phone: phone.trim() });
       if (isNew) {
-        setLotteryNumber(String(participantId).padStart(6, "0"));
+        setLotteryNumber(newLotteryNumber ?? "");
         setStep("done");
       } else {
         onClose();

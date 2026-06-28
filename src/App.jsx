@@ -6,13 +6,12 @@ import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
-import { getToken, registerOrLogin, saveToken } from "./lib/auth";
+import { fetchMe, registerOrLogin } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
 import { fetchMyStamps } from "./lib/stamps";
 
 const STORAGE_KEYS = {
   stamps: "walkingFestival.stamps",
-  userToken: "walkingFestival.userToken",
   lotteryNumber: "walkingFestival.lotteryNumber",
   name: "walkingFestival.name",
 };
@@ -30,7 +29,6 @@ function readJSON(key, fallback) {
 const urlParams = new URLSearchParams(window.location.search);
 const URL_BOOTH_ID = window.location.pathname === "/stamp" ? urlParams.get("booth") : null;
 
-// booth 파라미터를 즉시 제거해 주소창에서 URL을 복사·공유하지 못하도록 한다.
 if (URL_BOOTH_ID) {
   window.history.replaceState({}, "", "/");
 }
@@ -42,12 +40,12 @@ export default function App() {
   });
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
   const [boothItems, setBoothItems] = useState([]);
-  const [token, setToken] = useState(() => getToken());
-  const [loginModalOpen, setLoginModalOpen] = useState(() => !getToken());
+
+  // 세션: 서버에서 확인, 로딩 중에는 undefined
+  const [authStatus, setAuthStatus] = useState("loading"); // "loading" | "ok" | "none"
   const [lotteryNumber, setLotteryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.lotteryNumber) || "");
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
-  // QR 스캔 오버레이 표시 여부
   const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID));
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
@@ -57,31 +55,54 @@ export default function App() {
     [boothItems, stamps]
   );
 
+  // 부스 목록 로드
   useEffect(() => {
     fetchBooths().then(setBoothItems).catch(console.error);
   }, []);
 
-  // 토큰이 확정되면 서버에서 도장 현황을 가져와 동기화한다.
+  // 앱 시작 시 HttpOnly 쿠키로 세션 확인
   useEffect(() => {
-    if (!token) return;
-    fetchMyStamps(token)
+    fetchMe()
+      .then((me) => {
+        if (me) {
+          setParticipantName(me.name);
+          setLotteryNumber(me.lotteryNumber);
+          localStorage.setItem(STORAGE_KEYS.name, me.name);
+          localStorage.setItem(STORAGE_KEYS.lotteryNumber, me.lotteryNumber);
+          setAuthStatus("ok");
+        } else {
+          // 쿠키 세션 없음 — localStorage 캐시도 초기화
+          localStorage.removeItem(STORAGE_KEYS.name);
+          localStorage.removeItem(STORAGE_KEYS.lotteryNumber);
+          localStorage.removeItem(STORAGE_KEYS.stamps);
+          setParticipantName("");
+          setLotteryNumber("");
+          setStamps({});
+          setAuthStatus("none");
+        }
+      })
+      .catch(() => setAuthStatus("none"));
+  }, []);
+
+  // 세션 확인 후 도장 동기화
+  useEffect(() => {
+    if (authStatus !== "ok") return;
+    fetchMyStamps()
       .then((serverStamps) => {
         setStamps(serverStamps);
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(serverStamps));
       })
       .catch(console.error);
-  }, [token]);
+  }, [authStatus]);
 
   async function handleLoginSubmit({ name, phone }) {
-    const { token: newToken, participantId: newParticipantId, isNew } = await registerOrLogin(name, phone);
-    saveToken(newToken);
-    setToken(newToken);
+    const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone);
     setParticipantName(name);
-    localStorage.setItem(STORAGE_KEYS.name, name);
-    const newLotteryNumber = String(newParticipantId).padStart(6, "0");
-    localStorage.setItem(STORAGE_KEYS.lotteryNumber, newLotteryNumber);
     setLotteryNumber(newLotteryNumber);
-    return { participantId: newParticipantId, isNew };
+    localStorage.setItem(STORAGE_KEYS.name, name);
+    localStorage.setItem(STORAGE_KEYS.lotteryNumber, newLotteryNumber);
+    setAuthStatus("ok");
+    return { isNew, lotteryNumber: newLotteryNumber };
   }
 
   function handleChangeTab(nextTab) {
@@ -104,10 +125,8 @@ export default function App() {
 
   return (
     <div className="min-h-screen pb-28 text-ink">
-      {/* 관리자 페이지 */}
       {showAdmin && <AdminPage onExit={() => setShowAdmin(false)} />}
 
-      {/* 일반 페이지 */}
       {!showAdmin && (
         <>
           <header className="mx-auto w-full max-w-[30rem] px-4 pt-6 md:max-w-4xl md:px-6">
@@ -131,7 +150,6 @@ export default function App() {
                 onAdminClick={() => setAdminPasswordOpen(true)}
               />
             )}
-
             {tab === "stamp" && (
               <StampCardSection
                 boothItems={boothItems}
@@ -147,19 +165,20 @@ export default function App() {
             <StampScanPage
               boothId={URL_BOOTH_ID}
               boothTitle={boothItems.find((b) => b.booth_id === URL_BOOTH_ID)?.title}
-              token={token}
+              isAuthenticated={authStatus === "ok"}
               onDone={handleStampDone}
             />
           )}
 
-          <LoginModal open={loginModalOpen} onSubmit={handleLoginSubmit} onClose={() => setLoginModalOpen(false)} />
+          <LoginModal
+            open={authStatus === "none"}
+            onSubmit={handleLoginSubmit}
+            onClose={() => setAuthStatus("ok")}
+          />
 
           <AdminPasswordModal
             open={adminPasswordOpen}
-            onSuccess={() => {
-              setAdminPasswordOpen(false);
-              setShowAdmin(true);
-            }}
+            onSuccess={() => { setAdminPasswordOpen(false); setShowAdmin(true); }}
             onClose={() => setAdminPasswordOpen(false)}
           />
         </>

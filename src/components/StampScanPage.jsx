@@ -10,19 +10,20 @@ const STATUS = {
 
 /**
  * QR 코드 스캔 후 도장 적립 처리 결과를 전체 화면 오버레이로 표시합니다.
+ * 인증은 HttpOnly 쿠키로 자동 처리됩니다.
  *
- * @param {string}   boothId   - URL 쿼리에서 읽은 부스 ID
- * @param {string}   boothTitle - 부스 표시 이름 (없으면 boothId 사용)
- * @param {string}   token     - LocalStorage에서 읽은 참여자 토큰 (null이면 로그인 대기)
- * @param {Function} onDone    - 완료 콜백 ({ status, boothId })
+ * @param {string}   boothId          - URL 쿼리에서 읽은 부스 ID
+ * @param {string}   boothTitle       - 부스 표시 이름 (없으면 boothId 사용)
+ * @param {boolean}  isAuthenticated  - 세션 확인 완료 여부
+ * @param {Function} onDone           - 완료 콜백 ({ status, boothId })
  */
-export default function StampScanPage({ boothId, boothTitle, token, onDone }) {
-  const [status, setStatus] = useState(token ? STATUS.LOADING : STATUS.WAITING);
+export default function StampScanPage({ boothId, boothTitle, isAuthenticated, onDone }) {
+  const [status, setStatus] = useState(isAuthenticated ? STATUS.LOADING : STATUS.WAITING);
   const [errorMsg, setErrorMsg] = useState("");
-  const processedRef = useRef(false); // 중복 API 호출 방지
+  const processedRef = useRef(false);
 
   useEffect(() => {
-    if (!token || processedRef.current) return;
+    if (!isAuthenticated || processedRef.current) return;
 
     if (!boothId) {
       setStatus(STATUS.ERROR);
@@ -37,7 +38,7 @@ export default function StampScanPage({ boothId, boothTitle, token, onDone }) {
     fetch("/api/stamp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token, boothId }),
+      body: JSON.stringify({ boothId }),
     })
       .then(async (res) => {
         if (res.ok) {
@@ -58,7 +59,7 @@ export default function StampScanPage({ boothId, boothTitle, token, onDone }) {
         setErrorMsg("네트워크 오류가 발생했습니다.");
         setTimeout(() => onDone({ status: "error" }), 3000);
       });
-  }, [token, boothId]); // token이 설정되는 순간(로그인 완료 후) 자동으로 실행
+  }, [isAuthenticated, boothId]);
 
   const displayTitle = boothTitle || boothId;
 

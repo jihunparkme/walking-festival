@@ -1,60 +1,30 @@
-import { supabase } from "./supabase";
-
-const TOKEN_COOKIE_KEY = "wf_token";
-const TOKEN_COOKIE_DAYS = 180;
-
 /**
- * 신규 사용자 등록 또는 기존 사용자 재로그인.
- * - 전화번호 기준으로 중복 체크
- * - 신규: DB 저장 후 토큰 반환
- * - 기존: 이름이 일치하면 저장된 토큰 반환 (재접속 처리)
- * @returns {{ token: string, isNew: boolean }}
+ * 등록 또는 로그인 — 서버 API를 호출하고 HttpOnly 쿠키를 발급받습니다.
+ * 클라이언트는 토큰을 직접 다루지 않습니다.
+ * @returns {{ isNew: boolean, lotteryNumber: string }}
  */
 export async function registerOrLogin(name, phone) {
-  const { data: existing, error: fetchError } = await supabase
-    .from("participants")
-    .select("name, token, id")
-    .eq("phone", phone)
-    .maybeSingle();
+  const res = await fetch("/api/auth", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name, phone }),
+  });
 
-  if (fetchError) throw new Error("서버 조회 중 오류가 발생했습니다.");
+  const json = await res.json().catch(() => ({}));
 
-  // 기존 사용자
-  if (existing) {
-    if (existing.name !== name) {
-      throw new Error("입력하신 이름이 기존 등록 정보와 일치하지 않습니다.");
-    }
-    return { token: existing.token, participantId: existing.id, isNew: false };
+  if (!res.ok) {
+    throw new Error(json.error || "등록/로그인 중 오류가 발생했습니다.");
   }
 
-  // 신규 사용자
-  const { data: inserted, error: insertError } = await supabase
-    .from("participants")
-    .insert({ name, phone })
-    .select("id, token")
-    .single();
-
-  if (insertError) throw new Error("참여자 등록 중 오류가 발생했습니다.");
-
-  return { token: inserted.token, participantId: inserted.id, isNew: true };
+  return { isNew: json.isNew, lotteryNumber: json.lotteryNumber };
 }
 
-/** 토큰을 localStorage 와 Cookie 에 함께 저장 */
-export function saveToken(token) {
-  localStorage.setItem("walkingFestival.userToken", token);
-
-  const expires = new Date();
-  expires.setDate(expires.getDate() + TOKEN_COOKIE_DAYS);
-  document.cookie = `${TOKEN_COOKIE_KEY}=${token}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
-}
-
-/** localStorage 또는 Cookie 에서 토큰 반환 */
-export function getToken() {
-  const fromStorage = localStorage.getItem("walkingFestival.userToken");
-  if (fromStorage) return fromStorage;
-
-  const match = document.cookie
-    .split("; ")
-    .find((row) => row.startsWith(`${TOKEN_COOKIE_KEY}=`));
-  return match ? match.split("=")[1] : null;
+/**
+ * HttpOnly 쿠키 세션을 서버에서 검증하고 참여자 정보를 반환합니다.
+ * @returns {{ name: string, lotteryNumber: string } | null}
+ */
+export async function fetchMe() {
+  const res = await fetch("/api/me");
+  if (!res.ok) return null;
+  return res.json().catch(() => null);
 }

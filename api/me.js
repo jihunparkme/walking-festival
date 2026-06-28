@@ -23,26 +23,18 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "인증이 필요합니다." });
   }
 
-  const { data: participant, error: pError } = await supabase
+  const { data: participant, error } = await supabase
     .from("participants")
-    .select("id")
+    .select("id, name")
     .eq("token", token)
     .maybeSingle();
 
-  if (pError || !participant) {
+  if (error || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
-  const { data, error } = await supabase
-    .from("stamp_records")
-    .select("booth_id")
-    .eq("participant_id", participant.id);
-
-  if (error) {
-    console.error("stamp_records fetch error:", error);
-    return res.status(500).json({ error: "도장 정보를 불러오는 중 오류가 발생했습니다." });
-  }
-
-  const stamps = (data ?? []).reduce((acc, r) => ({ ...acc, [r.booth_id]: true }), {});
-  return res.status(200).json({ stamps });
+  return res.status(200).json({
+    name: participant.name,
+    lotteryNumber: String(participant.id).padStart(6, "0"),
+  });
 }
