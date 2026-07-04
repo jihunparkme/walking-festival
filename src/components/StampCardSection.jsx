@@ -20,7 +20,7 @@ export default function StampCardSection({ boothItems, stamps, completedStamps }
               key={item.booth_id}
               className={`relative overflow-hidden rounded-3xl border-2 p-4 ${
                 done
-                  ? "border-transparent bg-candyPink/70"
+                  ? "border-transparent bg-blue-200/70"
                   : "border-dashed border-[#b7c6db] bg-white"
               }`}
             >
@@ -33,7 +33,7 @@ export default function StampCardSection({ boothItems, stamps, completedStamps }
               )}
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
-              <div className={`mt-3 text-xs font-semibold ${done ? "text-[#d94a70]" : "text-[#8a9ab5]"}`}>
+              <div className={`mt-3 text-xs font-semibold ${done ? "text-[#1d4ed8]" : "text-[#8a9ab5]"}`}>
                 {done ? "✓ 도장 완료" : "QR 스캔 필요"}
               </div>
             </div>

@@ -7,7 +7,6 @@ export default {
         sans: ["Noto Sans KR", "Pretendard", "Apple SD Gothic Neo", "sans-serif"],
       },
       colors: {
-        candyPink: "#ffd9e8",
         skyMint: "#dff6ff",
         creamSun: "#fff4c2",
         limeCloud: "#e8f8d8",

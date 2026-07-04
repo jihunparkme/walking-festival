@@ -91,7 +91,7 @@ function ParticipantsTab() {
           value={searchInput}
           onChange={handleInputChange}
           placeholder="이름 또는 전화번호 검색"
-          className="flex-1 rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#ff99bb]"
+          className="flex-1 rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
         />
         {searchInput && (
           <button
@@ -110,7 +110,7 @@ function ParticipantsTab() {
       </p>
 
       {error && (
-        <p className="rounded-xl bg-[#fff0f4] px-3 py-2 text-xs text-[#d94a70]">{error}</p>
+        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
       )}
 
       {loading ? (
@@ -139,7 +139,7 @@ function ParticipantsTab() {
                   </td>
                   <td className="px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
                   <td className="px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
-                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#ff99bb]">
+                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#3b82f6]">
                     {String(row.id).padStart(6, "0")}
                   </td>
                   {showStart && (
@@ -222,7 +222,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           value={form.booth_id}
           onChange={(e) => set("booth_id", e.target.value)}
           required
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#ff99bb]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
           placeholder="QR 코드에 사용되는 고유 ID (예: booth-1)"
         />
       </div>
@@ -233,7 +233,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           value={form.title}
           onChange={(e) => set("title", e.target.value)}
           required
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#ff99bb]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
           placeholder="부스 이름"
         />
       </div>
@@ -243,7 +243,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           type="text"
           value={form.subtitle}
           onChange={(e) => set("subtitle", e.target.value)}
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#ff99bb]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
           placeholder="부제목"
         />
       </div>
@@ -251,7 +251,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-[#ff99bb] px-5 py-2 text-sm font-bold text-white disabled:opacity-60"
+          className="rounded-full bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {saving ? "저장 중…" : "저장"}
         </button>
@@ -344,14 +344,14 @@ function BoothsTab() {
             setShowAdd(true);
             setEditingId(null);
           }}
-          className="rounded-full bg-[#ff99bb] px-4 py-2 text-sm font-bold text-white"
+          className="rounded-full bg-[#3b82f6] px-4 py-2 text-sm font-bold text-white"
         >
           + 부스 추가
         </button>
       </div>
 
       {error && (
-        <p className="rounded-xl bg-[#fff0f4] px-3 py-2 text-xs text-[#d94a70]">{error}</p>
+        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
       )}
 
       {showAdd && (
@@ -396,7 +396,7 @@ function BoothsTab() {
                       )}
                       <p className="mt-1.5 text-xs text-[#5f6f88]">
                         참여 인원:{" "}
-                        <span className="font-bold text-[#ff99bb]">
+                        <span className="font-bold text-[#3b82f6]">
                           {booth.participant_count}명
                         </span>
                       </p>
@@ -415,7 +415,7 @@ function BoothsTab() {
                       <button
                         type="button"
                         onClick={() => setDeleteConfirm(booth.id)}
-                        className="rounded-xl bg-[#fff0f4] px-3 py-1.5 text-xs font-bold text-[#d94a70] hover:bg-[#ffd6e4]"
+                        className="rounded-xl bg-[#eff6ff] px-3 py-1.5 text-xs font-bold text-[#1d4ed8] hover:bg-[#dbeafe]"
                       >
                         삭제
                       </button>
@@ -448,7 +448,7 @@ function BoothsTab() {
                 type="button"
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={saving}
-                className="flex-1 rounded-full bg-[#d94a70] py-2 text-sm font-bold text-white disabled:opacity-60"
+                className="flex-1 rounded-full bg-[#1d4ed8] py-2 text-sm font-bold text-white disabled:opacity-60"
               >
                 {saving ? "삭제 중…" : "삭제"}
               </button>
@@ -497,7 +497,7 @@ export default function AdminPage({ onExit }) {
               onClick={() => setActiveTab(t.id)}
               className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
                 activeTab === t.id
-                  ? "bg-[#ff99bb] text-white"
+                  ? "bg-[#3b82f6] text-white"
                   : "bg-[#eef2f8] text-[#5f6f88] hover:bg-[#e0e9f5]"
               }`}
             >

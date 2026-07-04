@@ -87,7 +87,7 @@ export default function StampScanPage({ boothId, boothTitle, isAuthenticated, on
       {status === STATUS.SUCCESS && (
         <>
           <div className="mb-4 animate-bounce text-6xl">🎉</div>
-          <h2 className="text-2xl font-extrabold text-[#d94a70]">도장 획득!</h2>
+          <h2 className="text-2xl font-extrabold text-[#1d4ed8]">도장 획득!</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">
             <strong>{displayTitle}</strong> 부스 도장을 받았습니다.
           </p>

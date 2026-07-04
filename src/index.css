@@ -7,7 +7,7 @@
 :root {
   color: #3a3a4a;
   background:
-    radial-gradient(1200px 500px at 10% 0%, #ffe9f3 0%, transparent 60%),
+    radial-gradient(1200px 500px at 10% 0%, #dbeafe 0%, transparent 60%),
     radial-gradient(900px 450px at 90% 10%, #e8f8ff 0%, transparent 65%),
     linear-gradient(180deg, #fffefa 0%, #f5fff8 100%);
   font-family: "Noto Sans KR", "Pretendard", "Apple SD Gothic Neo", sans-serif;

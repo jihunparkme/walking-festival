@@ -7,7 +7,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
     <>
       {participantName && (
         <section className="soft-card flex items-center gap-3 px-5 py-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-candyPink/60 text-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-200/60 text-xl">
             👋
           </div>
           <p className="text-base font-bold text-[#1a2a3a]">
@@ -53,8 +53,8 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
         <section className="soft-card p-4 md:p-7">
           <h2 className="text-xl font-bold">나의 추첨번호</h2>
           <p className="mt-1 text-sm text-[#5f6f88]">추첨 이벤트에 사용되는 나의 번호입니다.</p>
-          <div className="mt-4 rounded-2xl bg-[#fff0f4] px-4 py-4 text-center">
-            <p className="text-3xl font-extrabold tracking-widest text-[#ff99bb]">{lotteryNumber}</p>
+          <div className="mt-4 rounded-2xl bg-[#eff6ff] px-4 py-4 text-center">
+            <p className="text-3xl font-extrabold tracking-widest text-[#3b82f6]">{lotteryNumber}</p>
           </div>
         </section>
       )}

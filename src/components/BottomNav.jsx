@@ -13,7 +13,7 @@ export default function BottomNav({ tab, onChangeTab }) {
             type="button"
             onClick={() => onChangeTab(item.id)}
             className={`rounded-full px-3 py-2 font-bold transition ${
-              tab === item.id ? "bg-candyPink" : "bg-transparent text-[#6c7b90]"
+              tab === item.id ? "bg-blue-200" : "bg-transparent text-[#6c7b90]"
             }`}
           >
             {item.label}
