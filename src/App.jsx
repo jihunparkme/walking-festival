@@ -6,7 +6,7 @@ import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
-import { fetchMe, registerOrLogin } from "./lib/auth";
+import { fetchMe, logout, registerOrLogin } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
 import { fetchMyStamps } from "./lib/stamps";
 
@@ -113,6 +113,17 @@ export default function App() {
     window.history.replaceState(null, "", `#${nextTab}`);
   }
 
+  async function handleLogout() {
+    await logout();
+    localStorage.removeItem(STORAGE_KEYS.name);
+    localStorage.removeItem(STORAGE_KEYS.lotteryNumber);
+    localStorage.removeItem(STORAGE_KEYS.stamps);
+    setParticipantName("");
+    setLotteryNumber("");
+    setStamps({});
+    setAuthStatus("none");
+  }
+
   function handleStampDone({ status, boothId }) {
     if (status === "success" && boothId) {
       setStamps((prev) => {
@@ -151,6 +162,7 @@ export default function App() {
                 lotteryNumber={lotteryNumber}
                 participantName={participantName}
                 onAdminClick={() => setAdminPasswordOpen(true)}
+                onLogout={handleLogout}
               />
             )}
             {tab === "stamp" && (

@@ -1,7 +1,7 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ lotteryNumber, participantName, onAdminClick }) {
+export default function HomeSection({ lotteryNumber, participantName, onAdminClick, onLogout }) {
 
   return (
     <>
@@ -10,10 +10,17 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-200/60 text-xl">
             👋
           </div>
-          <p className="text-base font-bold text-[#1a2a3a]">
+          <p className="flex-1 text-base font-bold text-[#1a2a3a]">
             {participantName}님, 환영합니다!
             <br/><span className="text-sm font-normal text-[#5b6c84]">오늘도 따뜻한 걸음 함께해요.</span>
           </p>
+          <button
+            type="button"
+            onClick={onLogout}
+            className="shrink-0 rounded-full border border-[#c9d5e5] px-3 py-1.5 text-xs font-semibold text-[#6c7b90] hover:bg-[#f3f6fb] hover:text-[#3a4a5c] transition"
+          >
+            로그아웃
+          </button>
         </section>
       )}
       <section className="soft-card space-y-5 p-4 md:p-7">

@@ -28,3 +28,10 @@ export async function fetchMe() {
   if (!res.ok) return null;
   return res.json().catch(() => null);
 }
+
+/**
+ * wf_token 쿠키를 서버에서 제거합니다.
+ */
+export async function logout() {
+  await fetch("/api/logout", { method: "POST" });
+}
