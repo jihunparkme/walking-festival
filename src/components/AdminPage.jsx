@@ -58,31 +58,6 @@ function ParticipantsTab() {
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-  // participants 컬럼을 동적으로 감지
-  const knownKeys = rows.length > 0 ? Object.keys(rows[0]) : [];
-  const showStart = knownKeys.includes("start_done") || knownKeys.includes("is_start");
-  const showReturn = knownKeys.includes("return_done") || knownKeys.includes("is_return");
-  const showComplete =
-    knownKeys.includes("complete_done") ||
-    knownKeys.includes("is_complete") ||
-    knownKeys.includes("is_completed");
-
-  function getBoolVal(row, ...candidates) {
-    for (const k of candidates) {
-      if (k in row) return row[k];
-    }
-    return null;
-  }
-
-  function BoolBadge({ value }) {
-    if (value === null) return <span className="text-[#aab5c5]">-</span>;
-    return value ? (
-      <span className="rounded-full bg-[#d1fae5] px-2 py-0.5 text-xs font-bold text-[#065f46]">완료</span>
-    ) : (
-      <span className="rounded-full bg-[#f3f4f6] px-2 py-0.5 text-xs font-bold text-[#6b7280]">미완료</span>
-    );
-  }
-
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
@@ -126,9 +101,6 @@ function ParticipantsTab() {
                 <th className="px-3 py-2.5">이름</th>
                 <th className="px-3 py-2.5">전화번호</th>
                 <th className="px-3 py-2.5 text-center">추첨번호</th>
-                {showStart && <th className="px-3 py-2.5 text-center">시작점</th>}
-                {showReturn && <th className="px-3 py-2.5 text-center">반환점</th>}
-                {showComplete && <th className="px-3 py-2.5 text-center">완주</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f8]">
@@ -142,21 +114,6 @@ function ParticipantsTab() {
                   <td className="px-3 py-2.5 text-center font-mono font-bold text-[#3b82f6]">
                     {String(row.id).padStart(6, "0")}
                   </td>
-                  {showStart && (
-                    <td className="px-3 py-2.5 text-center">
-                      <BoolBadge value={getBoolVal(row, "start_done", "is_start")} />
-                    </td>
-                  )}
-                  {showReturn && (
-                    <td className="px-3 py-2.5 text-center">
-                      <BoolBadge value={getBoolVal(row, "return_done", "is_return")} />
-                    </td>
-                  )}
-                  {showComplete && (
-                    <td className="px-3 py-2.5 text-center">
-                      <BoolBadge value={getBoolVal(row, "complete_done", "is_complete", "is_completed")} />
-                    </td>
-                  )}
                 </tr>
               ))}
             </tbody>
