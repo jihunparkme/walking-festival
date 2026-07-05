@@ -101,6 +101,8 @@ function ParticipantsTab() {
                 <th className="px-3 py-2.5">이름</th>
                 <th className="px-3 py-2.5">전화번호</th>
                 <th className="px-3 py-2.5 text-center">추첨번호</th>
+                <th className="px-3 py-2.5 text-center">반환점</th>
+                <th className="px-3 py-2.5 text-center">완주</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f8]">
@@ -113,6 +115,20 @@ function ParticipantsTab() {
                   <td className="px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
                   <td className="px-3 py-2.5 text-center font-mono font-bold text-[#3b82f6]">
                     {String(row.id).padStart(6, "0")}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {row.is_turn_completed ? (
+                      <span className="text-[#22c55e]">✅</span>
+                    ) : (
+                      <span className="text-[#c9d3e0]">—</span>
+                    )}
+                  </td>
+                  <td className="px-3 py-2.5 text-center">
+                    {row.is_finish_completed ? (
+                      <span className="text-[#22c55e]">✅</span>
+                    ) : (
+                      <span className="text-[#c9d3e0]">—</span>
+                    )}
                   </td>
                 </tr>
               ))}

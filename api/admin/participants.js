@@ -38,7 +38,7 @@ export default async function handler(req, res) {
 
     let query = supabase
       .from("participants")
-      .select("*", { count: "exact" })
+      .select("id, name, phone, is_turn_completed, is_finish_completed", { count: "exact" })
       .order("id", { ascending: true })
       .range(from, from + PAGE_SIZE - 1);
 
