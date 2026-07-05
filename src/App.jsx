@@ -49,6 +49,7 @@ export default function App() {
   const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID));
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
+  const [loginModalOpen, setLoginModalOpen] = useState(false);
 
   const completedStamps = useMemo(
     () => boothItems.filter((item) => stamps[item.booth_id]).length,
@@ -101,11 +102,16 @@ export default function App() {
     setLotteryNumber(newLotteryNumber);
     localStorage.setItem(STORAGE_KEYS.name, name);
     localStorage.setItem(STORAGE_KEYS.lotteryNumber, newLotteryNumber);
-    // isNew인 경우 DoneStep을 보여준 뒤 onClose에서 닫히므로 여기서 바로 닫지 않음
     if (!isNew) {
       setAuthStatus("ok");
     }
     return { isNew, lotteryNumber: newLotteryNumber };
+  }
+
+  function handleLoginClose() {
+    setLoginModalOpen(false);
+    // DoneStep "시작하기" 또는 기존 사용자 로그인 완료 후 호출
+    if (participantName) setAuthStatus("ok");
   }
 
   function handleChangeTab(nextTab) {
@@ -122,6 +128,7 @@ export default function App() {
     setLotteryNumber("");
     setStamps({});
     setAuthStatus("none");
+    setTab("home");
   }
 
   function handleStampDone({ status, boothId }) {
@@ -163,9 +170,10 @@ export default function App() {
                 participantName={participantName}
                 onAdminClick={() => setAdminPasswordOpen(true)}
                 onLogout={handleLogout}
+                onLoginClick={() => setLoginModalOpen(true)}
               />
             )}
-            {tab === "stamp" && (
+            {tab === "stamp" && authStatus === "ok" && (
               <StampCardSection
                 boothItems={boothItems}
                 stamps={stamps}
@@ -174,7 +182,7 @@ export default function App() {
             )}
           </main>
 
-          <BottomNav tab={tab} onChangeTab={handleChangeTab} />
+          <BottomNav tab={tab} onChangeTab={handleChangeTab} isAuthenticated={authStatus === "ok"} />
 
           {showStampScan && URL_BOOTH_ID && (
             <StampScanPage
@@ -186,9 +194,9 @@ export default function App() {
           )}
 
           <LoginModal
-            open={authStatus === "none"}
+            open={loginModalOpen}
             onSubmit={handleLoginSubmit}
-            onClose={() => setAuthStatus("ok")}
+            onClose={handleLoginClose}
           />
 
           <AdminPasswordModal

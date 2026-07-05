@@ -85,7 +85,7 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
             <p className="mt-2 text-xs leading-relaxed text-[#5f6f88]">
               본 캠페인은 「개인정보 보호법」 제15조에 따라 참여자의 동의를 받아
               개인정보를 수집·이용합니다. 수집된 개인정보는 행사 운영 목적
-              이외에 사용되지 않으며, 행사 종료일(2024년 9월 10일)로부터 30일
+              이외에 사용되지 않으며, 행사 종료일로부터 30일
               이내에 안전하게 파기됩니다. 동의를 거부할 권리가 있으나 거부 시
               캠페인 참여가 제한됩니다.
             </p>
@@ -200,6 +200,16 @@ export default function LoginModal({ open, onSubmit, onClose }) {
 
   if (!open) return null;
 
+  function handleClose() {
+    setStep("input");
+    setName("");
+    setPhone("");
+    setAgreed(false);
+    setSubmitError("");
+    setLotteryNumber("");
+    onClose();
+  }
+
   function handleFieldChange(field, value) {
     if (field === "name") setName(value);
     else if (field === "phone") setPhone(value);
@@ -220,7 +230,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
         setLotteryNumber(newLotteryNumber ?? "");
         setStep("done");
       } else {
-        onClose();
+        handleClose();
       }
     } catch (err) {
       setSubmitError(err.message || "오류가 발생했습니다. 다시 시도해 주세요.");
@@ -236,27 +246,37 @@ export default function LoginModal({ open, onSubmit, onClose }) {
 
   return (
     <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/40 p-4">
-      <div className="w-full max-w-sm rounded-3xl bg-white p-6 shadow-soft">
-        {step === "input" ? (
-          <InputStep
-            name={name}
-            phone={phone}
-            agreed={agreed}
-            onChange={handleFieldChange}
-            onNext={handleNext}
-          />
-        ) : step === "confirm" ? (
-          <ConfirmStep
-            name={name.trim()}
-            phone={phone.trim()}
-            loading={loading}
-            error={submitError}
-            onConfirm={handleConfirm}
-            onBack={handleBack}
-          />
-        ) : (
-          <DoneStep lotteryNumber={lotteryNumber} onClose={onClose} />
-        )}
+      <div className="relative w-full max-w-sm">
+        <button
+          type="button"
+          onClick={handleClose}
+          className="absolute -right-1 -top-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition"
+          aria-label="닫기"
+        >
+          ✕
+        </button>
+        <div className="rounded-3xl bg-white p-6 shadow-soft">
+          {step === "input" ? (
+            <InputStep
+              name={name}
+              phone={phone}
+              agreed={agreed}
+              onChange={handleFieldChange}
+              onNext={handleNext}
+            />
+          ) : step === "confirm" ? (
+            <ConfirmStep
+              name={name.trim()}
+              phone={phone.trim()}
+              loading={loading}
+              error={submitError}
+              onConfirm={handleConfirm}
+              onBack={handleBack}
+            />
+          ) : (
+            <DoneStep lotteryNumber={lotteryNumber} onClose={handleClose} />
+          )}
+        </div>
       </div>
     </div>
   );

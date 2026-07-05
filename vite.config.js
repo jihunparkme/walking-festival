@@ -95,6 +95,18 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ isNew: true, lotteryNumber: String(inserted.id).padStart(6, "0") }));
           });
 
+          // POST /api/logout — 쿠키 제거
+          server.middlewares.use("/api/logout", (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "POST") {
+              res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
+            }
+            // 로컬 개발: Secure 플래그 제외 (HTTP)
+            res.setHeader("Set-Cookie", `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
+            res.statusCode = 200;
+            res.end(JSON.stringify({ ok: true }));
+          });
+
           // GET /api/me — 쿠키 세션 확인
           server.middlewares.use("/api/me", async (req, res) => {
             res.setHeader("Content-Type", "application/json");

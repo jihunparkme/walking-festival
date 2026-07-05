@@ -1,7 +1,7 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ lotteryNumber, participantName, onAdminClick, onLogout }) {
+export default function HomeSection({ lotteryNumber, participantName, onAdminClick, onLogout, onLoginClick }) {
 
   return (
     <>
@@ -25,7 +25,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
       )}
       <section className="soft-card space-y-5 p-4 md:p-7">
         <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
-          <div>
+          <div className="min-w-0">
             <h2 className="text-xl font-bold">축제 안내</h2>
             <div className="mt-3 space-y-3 leading-relaxed text-[#4e5f75]">
               <p>
@@ -44,7 +44,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
               </p>
             </div>
           </div>
-          <div className="rounded-bubble bg-skyMint p-4">
+          <div className="min-w-0 rounded-bubble bg-skyMint p-4">
             <p className="text-sm font-semibold text-[#546378]">협력기관</p>
             <div className="mt-3 space-y-3">
               <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
@@ -65,6 +65,19 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           </div>
         </div>
       </section>
+
+      {!participantName && (
+        <section className="soft-card p-4 md:p-7">
+          <p className="text-sm text-[#5b6c84]">걷기캠페인에 참여하고 도장판과 추첨 이벤트를 이용해 보세요.</p>
+          <button
+            type="button"
+            onClick={onLoginClick}
+            className="mt-3 w-full rounded-full bg-[#3b82f6] py-3 text-sm font-bold text-white transition hover:bg-[#2563eb]"
+          >
+            걷기 챌린지 참여
+          </button>
+        </section>
+      )}
 
       {lotteryNumber && (
         <section className="soft-card p-4 md:p-7">
