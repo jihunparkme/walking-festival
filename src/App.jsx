@@ -25,11 +25,15 @@ function readJSON(key, fallback) {
   }
 }
 
-// /stamp?booth=xxx URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
+// /stamp?booth=xxx 또는 /stamp?type=turn|finish URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
 const urlParams = new URLSearchParams(window.location.search);
-const URL_BOOTH_ID = window.location.pathname === "/stamp" ? urlParams.get("booth") : null;
+const isStampPath = window.location.pathname === "/stamp";
+const URL_BOOTH_ID = isStampPath ? urlParams.get("booth") : null;
+const URL_CHECKPOINT_TYPE = isStampPath ? urlParams.get("type") : null;
+const VALID_CHECKPOINT_TYPES = ["turn", "finish"];
+const URL_TYPE = VALID_CHECKPOINT_TYPES.includes(URL_CHECKPOINT_TYPE) ? URL_CHECKPOINT_TYPE : null;
 
-if (URL_BOOTH_ID) {
+if (URL_BOOTH_ID || URL_TYPE) {
   window.history.replaceState({}, "", "/");
 }
 
@@ -46,7 +50,9 @@ export default function App() {
   const [lotteryNumber, setLotteryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.lotteryNumber) || "");
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
-  const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID));
+  const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID || URL_TYPE));
+  const [isTurnCompleted, setIsTurnCompleted] = useState(false);
+  const [isFinishCompleted, setIsFinishCompleted] = useState(false);
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -68,6 +74,8 @@ export default function App() {
         if (me) {
           setParticipantName(me.name);
           setLotteryNumber(me.lotteryNumber);
+          setIsTurnCompleted(Boolean(me.isTurnCompleted));
+          setIsFinishCompleted(Boolean(me.isFinishCompleted));
           localStorage.setItem(STORAGE_KEYS.name, me.name);
           localStorage.setItem(STORAGE_KEYS.lotteryNumber, me.lotteryNumber);
           setAuthStatus("ok");
@@ -131,8 +139,11 @@ export default function App() {
     setTab("home");
   }
 
-  function handleStampDone({ status, boothId }) {
-    if (status === "success" && boothId) {
+  function handleStampDone({ status, mode, boothId, checkpointType }) {
+    if (status === "success" && mode === "checkpoint" && checkpointType) {
+      if (checkpointType === "turn") setIsTurnCompleted(true);
+      if (checkpointType === "finish") setIsFinishCompleted(true);
+    } else if (status === "success" && boothId) {
       setStamps((prev) => {
         const next = { ...prev, [boothId]: true };
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
@@ -178,16 +189,20 @@ export default function App() {
                 boothItems={boothItems}
                 stamps={stamps}
                 completedStamps={completedStamps}
+                isTurnCompleted={isTurnCompleted}
+                isFinishCompleted={isFinishCompleted}
               />
             )}
           </main>
 
           <BottomNav tab={tab} onChangeTab={handleChangeTab} isAuthenticated={authStatus === "ok"} />
 
-          {showStampScan && URL_BOOTH_ID && (
+          {showStampScan && (URL_BOOTH_ID || URL_TYPE) && (
             <StampScanPage
+              mode={URL_TYPE ? "checkpoint" : "booth"}
               boothId={URL_BOOTH_ID}
               boothTitle={boothItems.find((b) => b.booth_id === URL_BOOTH_ID)?.title}
+              checkpointType={URL_TYPE}
               isAuthenticated={authStatus === "ok"}
               onDone={handleStampDone}
             />

@@ -118,11 +118,16 @@ export default defineConfig(({ mode }) => {
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const { data: participant } = await supabase
-              .from("participants").select("id, name").eq("token", token).maybeSingle();
+              .from("participants").select("id, name, is_turn_completed, is_finish_completed").eq("token", token).maybeSingle();
             if (!participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
 
             res.statusCode = 200;
-            res.end(JSON.stringify({ name: participant.name, lotteryNumber: String(participant.id).padStart(6, "0") }));
+            res.end(JSON.stringify({
+              name: participant.name,
+              lotteryNumber: String(participant.id).padStart(6, "0"),
+              isTurnCompleted: participant.is_turn_completed,
+              isFinishCompleted: participant.is_finish_completed,
+            }));
           });
 
           // GET /api/stamps — 쿠키 인증으로 도장 조회
@@ -174,6 +179,38 @@ export default defineConfig(({ mode }) => {
             }
             res.statusCode = 201;
             res.end(JSON.stringify({ success: true, boothId }));
+          });
+
+          // POST /api/checkpoint — 반환점/완주 QR 인증
+          server.middlewares.use("/api/checkpoint", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "POST") {
+              res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
+            }
+            const token = parseCookieToken(req.headers.cookie);
+            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+
+            const { type } = await readBody(req);
+            const FIELD_BY_TYPE = { turn: "is_turn_completed", finish: "is_finish_completed" };
+            const field = FIELD_BY_TYPE[type];
+            if (!field) { res.statusCode = 400; res.end(JSON.stringify({ error: "type은 turn 또는 finish여야 합니다." })); return; }
+
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+            const { data: participant, error: pError } = await supabase
+              .from("participants").select(`id, ${field}`).eq("token", token).maybeSingle();
+            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+
+            if (participant[field]) {
+              res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
+            }
+
+            const { error: updateError } = await supabase
+              .from("participants").update({ [field]: true }).eq("id", participant.id);
+            if (updateError) {
+              res.statusCode = 500; res.end(JSON.stringify({ error: "인증 저장 중 오류가 발생했습니다." })); return;
+            }
+            res.statusCode = 200;
+            res.end(JSON.stringify({ success: true, type }));
           });
         },
       },
