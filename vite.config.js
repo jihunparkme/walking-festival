@@ -34,6 +34,21 @@ function escapeFilter(s) {
   return s.replace(/[%(),]/g, "");
 }
 
+/** 파일명에 쓸 수 없는 문자 제거 (이름/전화번호를 파일명 일부로 사용) */
+function sanitizeForFileName(value) {
+  return String(value ?? "").replace(/[^\w가-힣-]/g, "");
+}
+
+function extFromContentType(contentType) {
+  if (contentType === "image/png") return "png";
+  if (contentType === "image/webp") return "webp";
+  return "jpg";
+}
+
+function isImageContentType(contentType) {
+  return typeof contentType === "string" && contentType.startsWith("image/");
+}
+
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
@@ -211,6 +226,53 @@ export default defineConfig(({ mode }) => {
             }
             res.statusCode = 200;
             res.end(JSON.stringify({ success: true, type }));
+          });
+
+          // POST /api/finish-photo — 완주 인증샷 업로드 (walking-festival private 버킷)
+          server.middlewares.use("/api/finish-photo", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (req.method !== "POST") {
+              res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
+            }
+            const token = parseCookieToken(req.headers.cookie);
+            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+
+            const { fileBase64, contentType } = await readBody(req);
+            if (!fileBase64) { res.statusCode = 400; res.end(JSON.stringify({ error: "사진 데이터가 필요합니다." })); return; }
+            if (!isImageContentType(contentType)) {
+              res.statusCode = 400; res.end(JSON.stringify({ error: "이미지 파일만 업로드할 수 있습니다." })); return;
+            }
+
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+            const { data: participant, error: pError } = await supabase
+              .from("participants")
+              .select("id, name, phone, is_finish_completed")
+              .eq("token", token).maybeSingle();
+            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            if (!participant.is_finish_completed) {
+              res.statusCode = 400; res.end(JSON.stringify({ error: "완주 인증을 먼저 완료해 주세요." })); return;
+            }
+
+            const buffer = Buffer.from(fileBase64.split(",").pop(), "base64");
+            const ext = extFromContentType(contentType);
+            const fileName = `${sanitizeForFileName(participant.name)}_${sanitizeForFileName(participant.phone)}_${participant.id}.${ext}`;
+            const path = `finish-photos/${fileName}`;
+
+            const { error: uploadError } = await supabase.storage
+              .from("walking-festival")
+              .upload(path, buffer, { contentType: contentType || "image/jpeg", upsert: true });
+            if (uploadError) {
+              res.statusCode = 500; res.end(JSON.stringify({ error: "사진 업로드 중 오류가 발생했습니다." })); return;
+            }
+
+            const { error: updateError } = await supabase
+              .from("participants").update({ finish_photo_path: path }).eq("id", participant.id);
+            if (updateError) {
+              res.statusCode = 500; res.end(JSON.stringify({ error: "사진 정보 저장 중 오류가 발생했습니다." })); return;
+            }
+
+            res.statusCode = 200;
+            res.end(JSON.stringify({ success: true, path }));
           });
         },
       },
