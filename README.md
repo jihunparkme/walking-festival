@@ -52,4 +52,3 @@ npm run build
 - `src/components/WalkCertifySection.jsx`: 걷기/인증 UI
 - `src/components/BottomNav.jsx`: 하단 탭 네비게이션
 - `src/components/PasswordModal.jsx`: 관리자 비밀번호 모달
-- `src/data/stamps.js`: 부스 스탬프 데이터
