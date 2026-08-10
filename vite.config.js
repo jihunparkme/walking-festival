@@ -35,8 +35,9 @@ function escapeFilter(s) {
 }
 
 /** 파일명에 쓸 수 없는 문자 제거 (이름/전화번호를 파일명 일부로 사용) */
+// Supabase Storage 키는 한글 등 비 ASCII 문자를 허용하지 않으므로 ASCII 문자만 남긴다.
 function sanitizeForFileName(value) {
-  return String(value ?? "").replace(/[^\w가-힣-]/g, "");
+  return String(value ?? "").replace(/[^\w-]/g, "");
 }
 
 function extFromContentType(contentType) {
