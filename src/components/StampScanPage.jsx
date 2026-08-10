@@ -8,6 +8,7 @@ const STATUS = {
   DUPLICATE: "duplicate", // 이미 완료됨
   ERROR: "error",         // 오류
   PHOTO: "photo",         // 완주 인증 완료 — 완주 사진 촬영 대기
+  TURN_REQUIRED: "turn_required", // 완주 인증 시도했지만 반환점 인증이 먼저 필요함
 };
 
 // 체크포인트(반환점/완주) 표시 문구
@@ -92,6 +93,16 @@ export default function StampScanPage({
         } else if (res.status === 409) {
           setStatus(STATUS.DUPLICATE);
           setTimeout(() => onDone({ status: "duplicate", mode, boothId, checkpointType }), 2500);
+        } else if (res.status === 403) {
+          const data = await res.json().catch(() => ({}));
+          if (data.code === "TURN_REQUIRED") {
+            // 자동 이동 없이 안내 화면에 머무르며, 사용자가 직접 홈으로 이동
+            setStatus(STATUS.TURN_REQUIRED);
+            return;
+          }
+          setStatus(STATUS.ERROR);
+          setErrorMsg(data.error || "오류가 발생했습니다.");
+          setTimeout(() => onDone({ status: "error" }), 3000);
         } else {
           const data = await res.json().catch(() => ({}));
           setStatus(STATUS.ERROR);
@@ -267,6 +278,23 @@ export default function StampScanPage({
           <h2 className="text-xl font-extrabold">오류가 발생했습니다</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">{errorMsg}</p>
           <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 홈으로 이동합니다…</p>
+        </>
+      )}
+
+      {status === STATUS.TURN_REQUIRED && (
+        <>
+          <div className="mb-4 text-5xl">🚩</div>
+          <h2 className="text-xl font-extrabold">반환점 인증이 먼저 필요해요</h2>
+          <p className="mt-2 text-sm text-[#5b6c84]">
+            완주 인증은 반환점 QR 코드를 먼저 찍은 후 이용해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => onDone({ status: "home" })}
+            className="mt-6 rounded-bubble bg-[#1d4ed8] px-6 py-3 text-sm font-bold text-white"
+          >
+            홈으로 이동
+          </button>
         </>
       )}
     </div>

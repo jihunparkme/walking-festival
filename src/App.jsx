@@ -165,7 +165,8 @@ export default function App() {
     }
     setShowStampScan(false);
     window.history.replaceState({}, "", "/");
-    handleChangeTab("stamp");
+    // 반환점 미인증 안내 화면의 "홈으로 이동" 버튼 클릭 시 홈 탭으로 이동
+    handleChangeTab(status === "home" ? "home" : "stamp");
   }
 
   return (

@@ -36,15 +36,23 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "type은 turn 또는 finish여야 합니다." });
   }
 
-  // token으로 참여자 조회 (해당 체크포인트 완료 여부 함께 조회)
+  // token으로 참여자 조회 (해당 체크포인트 완료 여부 + 반환점 완료 여부 함께 조회)
   const { data: participant, error: pError } = await supabase
     .from("participants")
-    .select(`id, ${field}`)
+    .select(`id, is_turn_completed, ${field}`)
     .eq("token", token)
     .maybeSingle();
 
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
+  }
+
+  // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
+  if (type === "finish" && !participant.is_turn_completed) {
+    return res.status(403).json({
+      error: "반환점 QR 코드를 먼저 찍은 후 이용해 주세요.",
+      code: "TURN_REQUIRED",
+    });
   }
 
   if (participant[field]) {

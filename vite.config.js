@@ -213,8 +213,15 @@ export default defineConfig(({ mode }) => {
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const { data: participant, error: pError } = await supabase
-              .from("participants").select(`id, ${field}`).eq("token", token).maybeSingle();
+              .from("participants").select(`id, is_turn_completed, ${field}`).eq("token", token).maybeSingle();
             if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+
+            // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
+            if (type === "finish" && !participant.is_turn_completed) {
+              res.statusCode = 403;
+              res.end(JSON.stringify({ error: "반환점 QR 코드를 먼저 찍은 후 이용해 주세요.", code: "TURN_REQUIRED" }));
+              return;
+            }
 
             if (participant[field]) {
               res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
