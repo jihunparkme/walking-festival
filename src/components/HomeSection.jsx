@@ -44,8 +44,16 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
               </p>
             </div>
           </div>
-          <div className="min-w-0 rounded-bubble bg-skyMint p-4">
-            <p className="text-sm font-semibold text-[#546378]">협력기관</p>
+          <div className="min-w-0 space-y-4">
+            <div className="rounded-bubble bg-creamSun p-4">
+              <p className="text-sm font-semibold text-[#546378]">💳 후원계좌</p>
+              <div className="mt-3 rounded-2xl bg-white/90 p-3">
+                <p className="text-sm font-bold text-[#1a2a3a]">농협 301-0132-7224-11</p>
+                <p className="text-xs text-[#60718a]">사단법인월드휴먼브리지</p>
+              </div>
+            </div>
+            <div className="rounded-bubble bg-skyMint p-4">
+            <p className="text-sm font-semibold text-[#546378]">🤝 협력기관</p>
             <div className="mt-3 space-y-3">
               <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
                 <img src={org1} alt="안양월드휴먼브리지" className="h-10 w-10 animate-bob rounded-full object-cover" />
@@ -61,6 +69,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
                   <p className="text-xs text-[#60718a]">지역사회 연계 협력기관</p>
                 </div>
               </div>
+            </div>
             </div>
           </div>
         </div>
