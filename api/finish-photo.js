@@ -31,7 +31,41 @@ function isImageContentType(contentType) {
   return typeof contentType === "string" && contentType.startsWith("image/");
 }
 
+// 서명된 URL의 유효 시간 (초) — 사진 조회 화면 노출 동안만 유효하면 충분
+const SIGNED_URL_EXPIRES_IN = 60 * 10;
+
 export default async function handler(req, res) {
+  if (req.method === "GET") {
+    const token = parseCookieToken(req.headers.cookie);
+    if (!token) {
+      return res.status(401).json({ error: "인증이 필요합니다." });
+    }
+
+    const { data: participant, error: pError } = await supabase
+      .from("participants")
+      .select("id, finish_photo_path")
+      .eq("token", token)
+      .maybeSingle();
+
+    if (pError || !participant) {
+      return res.status(401).json({ error: "유효하지 않은 세션입니다." });
+    }
+    if (!participant.finish_photo_path) {
+      return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
+    }
+
+    const { data: signed, error: signError } = await supabase.storage
+      .from(BUCKET)
+      .createSignedUrl(participant.finish_photo_path, SIGNED_URL_EXPIRES_IN);
+
+    if (signError || !signed) {
+      console.error("finish photo signed url error:", signError);
+      return res.status(500).json({ error: "사진을 불러오는 중 오류가 발생했습니다." });
+    }
+
+    return res.status(200).json({ url: signed.signedUrl });
+  }
+
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }

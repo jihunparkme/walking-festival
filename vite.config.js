@@ -134,7 +134,7 @@ export default defineConfig(({ mode }) => {
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const { data: participant } = await supabase
-              .from("participants").select("id, name, is_turn_completed, is_finish_completed").eq("token", token).maybeSingle();
+              .from("participants").select("id, name, is_turn_completed, is_finish_completed, finish_photo_path").eq("token", token).maybeSingle();
             if (!participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
 
             res.statusCode = 200;
@@ -143,6 +143,7 @@ export default defineConfig(({ mode }) => {
               lotteryNumber: String(participant.id).padStart(6, "0"),
               isTurnCompleted: participant.is_turn_completed,
               isFinishCompleted: participant.is_finish_completed,
+              hasFinishPhoto: Boolean(participant.finish_photo_path),
             }));
           });
 
@@ -213,7 +214,7 @@ export default defineConfig(({ mode }) => {
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const { data: participant, error: pError } = await supabase
-              .from("participants").select(`id, is_turn_completed, ${field}`).eq("token", token).maybeSingle();
+              .from("participants").select(`id, is_turn_completed, finish_photo_path, ${field}`).eq("token", token).maybeSingle();
             if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
 
             // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
@@ -224,6 +225,12 @@ export default defineConfig(({ mode }) => {
             }
 
             if (participant[field]) {
+              // 완주 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우 재등록을 허용
+              if (type === "finish" && !participant.finish_photo_path) {
+                res.statusCode = 409;
+                res.end(JSON.stringify({ error: "완주 인증은 완료되었지만 사진이 등록되지 않았습니다.", type, needsPhoto: true }));
+                return;
+              }
               res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
             }
 
@@ -236,14 +243,33 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ success: true, type }));
           });
 
-          // POST /api/finish-photo — 완주 인증샷 업로드 (walking-festival private 버킷)
+          // GET/POST /api/finish-photo — 완주 인증샷 조회(서명된 URL)/업로드 (walking-festival private 버킷)
+          const FINISH_PHOTO_SIGNED_URL_EXPIRES_IN = 60 * 10;
           server.middlewares.use("/api/finish-photo", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
+            const token = parseCookieToken(req.headers.cookie);
+            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+
+            if (req.method === "GET") {
+              const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+              const { data: participant, error: pError } = await supabase
+                .from("participants").select("id, finish_photo_path").eq("token", token).maybeSingle();
+              if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+              if (!participant.finish_photo_path) { res.statusCode = 404; res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." })); return; }
+
+              const { data: signed, error: signError } = await supabase.storage
+                .from("walking-festival")
+                .createSignedUrl(participant.finish_photo_path, FINISH_PHOTO_SIGNED_URL_EXPIRES_IN);
+              if (signError || !signed) { res.statusCode = 500; res.end(JSON.stringify({ error: "사진을 불러오는 중 오류가 발생했습니다." })); return; }
+
+              res.statusCode = 200;
+              res.end(JSON.stringify({ url: signed.signedUrl }));
+              return;
+            }
+
             if (req.method !== "POST") {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
 
             const { fileBase64, contentType } = await readBody(req);
             if (!fileBase64) { res.statusCode = 400; res.end(JSON.stringify({ error: "사진 데이터가 필요합니다." })); return; }

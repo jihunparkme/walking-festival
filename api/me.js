@@ -25,7 +25,7 @@ export default async function handler(req, res) {
 
   const { data: participant, error } = await supabase
     .from("participants")
-    .select("id, name, is_turn_completed, is_finish_completed")
+    .select("id, name, is_turn_completed, is_finish_completed, finish_photo_path")
     .eq("token", token)
     .maybeSingle();
 
@@ -38,5 +38,6 @@ export default async function handler(req, res) {
     lotteryNumber: String(participant.id).padStart(6, "0"),
     isTurnCompleted: participant.is_turn_completed,
     isFinishCompleted: participant.is_finish_completed,
+    hasFinishPhoto: Boolean(participant.finish_photo_path),
   });
 }

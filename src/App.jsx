@@ -4,6 +4,7 @@ import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
+import FinishPhotoSection from "./components/FinishPhotoSection";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
 import { fetchMe, logout, registerOrLogin } from "./lib/auth";
@@ -40,7 +41,7 @@ if (URL_BOOTH_ID || URL_TYPE) {
 export default function App() {
   const [tab, setTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    return hash === "stamp" ? "stamp" : "home";
+    return hash === "stamp" || hash === "finishPhoto" ? hash : "home";
   });
   const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
   const [boothItems, setBoothItems] = useState([]);
@@ -53,6 +54,7 @@ export default function App() {
   const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID || URL_TYPE));
   const [isTurnCompleted, setIsTurnCompleted] = useState(false);
   const [isFinishCompleted, setIsFinishCompleted] = useState(false);
+  const [hasFinishPhoto, setHasFinishPhoto] = useState(false);
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
@@ -76,6 +78,7 @@ export default function App() {
           setLotteryNumber(me.lotteryNumber);
           setIsTurnCompleted(Boolean(me.isTurnCompleted));
           setIsFinishCompleted(Boolean(me.isFinishCompleted));
+          setHasFinishPhoto(Boolean(me.hasFinishPhoto));
           localStorage.setItem(STORAGE_KEYS.name, me.name);
           localStorage.setItem(STORAGE_KEYS.lotteryNumber, me.lotteryNumber);
           setAuthStatus("ok");
@@ -117,6 +120,15 @@ export default function App() {
       .catch(console.error);
   }, [authStatus]);
 
+  // 새로고침 등으로 해시가 "#finishPhoto"로 복원됐지만 접근 조건(완주 인증 + 사진 등록)이
+  // 아직 충족되지 않은 경우(세션 만료, 사진 미등록 등) 홈 탭으로 되돌린다.
+  useEffect(() => {
+    if (tab !== "finishPhoto" || authStatus === "loading") return;
+    if (authStatus !== "ok" || !isFinishCompleted || !hasFinishPhoto) {
+      handleChangeTab("home");
+    }
+  }, [tab, authStatus, isFinishCompleted, hasFinishPhoto]);
+
   async function handleLoginSubmit({ name, phone }) {
     const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone);
     setParticipantName(name);
@@ -155,7 +167,10 @@ export default function App() {
   function handleStampDone({ status, mode, boothId, checkpointType }) {
     if (status === "success" && mode === "checkpoint" && checkpointType) {
       if (checkpointType === "turn") setIsTurnCompleted(true);
-      if (checkpointType === "finish") setIsFinishCompleted(true);
+      if (checkpointType === "finish") {
+        setIsFinishCompleted(true);
+        setHasFinishPhoto(true);
+      }
     } else if (status === "success" && boothId) {
       setStamps((prev) => {
         const next = { ...prev, [boothId]: true };
@@ -207,9 +222,17 @@ export default function App() {
                 isFinishCompleted={isFinishCompleted}
               />
             )}
+            {tab === "finishPhoto" && authStatus === "ok" && isFinishCompleted && hasFinishPhoto && (
+              <FinishPhotoSection />
+            )}
           </main>
 
-          <BottomNav tab={tab} onChangeTab={handleChangeTab} isAuthenticated={authStatus === "ok"} />
+          <BottomNav
+            tab={tab}
+            onChangeTab={handleChangeTab}
+            isAuthenticated={authStatus === "ok"}
+            showFinishPhotoTab={isFinishCompleted && hasFinishPhoto}
+          />
 
           {showStampScan && (URL_BOOTH_ID || URL_TYPE) && (
             <StampScanPage

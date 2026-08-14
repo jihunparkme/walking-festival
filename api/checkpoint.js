@@ -36,10 +36,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: "type은 turn 또는 finish여야 합니다." });
   }
 
-  // token으로 참여자 조회 (해당 체크포인트 완료 여부 + 반환점 완료 여부 함께 조회)
+  // token으로 참여자 조회 (해당 체크포인트 완료 여부 + 반환점 완료 여부 + 완주 사진 등록 여부 함께 조회)
   const { data: participant, error: pError } = await supabase
     .from("participants")
-    .select(`id, is_turn_completed, ${field}`)
+    .select(`id, is_turn_completed, finish_photo_path, ${field}`)
     .eq("token", token)
     .maybeSingle();
 
@@ -56,6 +56,15 @@ export default async function handler(req, res) {
   }
 
   if (participant[field]) {
+    // 완주 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우(중간 이탈 등)
+    // 단순 중복 오류 대신 사진 재등록이 가능하도록 안내한다.
+    if (type === "finish" && !participant.finish_photo_path) {
+      return res.status(409).json({
+        error: "완주 인증은 완료되었지만 사진이 등록되지 않았습니다.",
+        type,
+        needsPhoto: true,
+      });
+    }
     return res.status(409).json({ error: "이미 인증이 완료되었습니다.", type });
   }
 

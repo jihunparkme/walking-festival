@@ -31,3 +31,17 @@ export async function uploadFinishPhoto(file) {
   }
   return json;
 }
+
+/**
+ * 등록된 완주 인증 사진의 서명된 URL(임시, private 버킷)을 조회합니다.
+ * HttpOnly 쿠키로 참여자를 식별하므로 별도 인증 헤더 불필요.
+ */
+export async function fetchFinishPhotoUrl() {
+  const res = await fetch("/api/finish-photo", { method: "GET" });
+
+  const json = await res.json().catch(() => ({}));
+  if (!res.ok) {
+    throw new Error(json.error || "사진을 불러오는 중 오류가 발생했습니다.");
+  }
+  return json.url;
+}

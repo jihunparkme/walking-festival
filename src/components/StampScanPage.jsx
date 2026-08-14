@@ -8,6 +8,7 @@ const STATUS = {
   DUPLICATE: "duplicate", // 이미 완료됨
   ERROR: "error",         // 오류
   PHOTO: "photo",         // 완주 인증 완료 — 완주 사진 촬영 대기
+  PHOTO_SAVED: "photo_saved", // 완주 사진 업로드(저장) 완료
   TURN_REQUIRED: "turn_required", // 완주 인증 시도했지만 반환점 인증이 먼저 필요함
 };
 
@@ -49,6 +50,7 @@ export default function StampScanPage({
   const [photoUploading, setPhotoUploading] = useState(false);
   const [photoError, setPhotoError] = useState("");
   const photoInputRef = useRef(null);
+  const galleryInputRef = useRef(null);
 
   const isCheckpoint = mode === "checkpoint";
   const checkpointLabel = CHECKPOINT_LABEL[checkpointType];
@@ -91,6 +93,13 @@ export default function StampScanPage({
           setStatus(STATUS.SUCCESS);
           setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
         } else if (res.status === 409) {
+          const data = await res.json().catch(() => ({}));
+          // 완주 인증은 이미 완료됐지만 사진이 아직 등록되지 않은 경우
+          // 단순 중복 안내 대신 사진 촬영 단계로 다시 진입시켜 등록을 이어갈 수 있게 한다.
+          if (isCheckpoint && checkpointType === "finish" && data.needsPhoto) {
+            setStatus(STATUS.PHOTO);
+            return;
+          }
           setStatus(STATUS.DUPLICATE);
           setTimeout(() => onDone({ status: "duplicate", mode, boothId, checkpointType }), 2500);
         } else if (res.status === 403) {
@@ -133,9 +142,15 @@ export default function StampScanPage({
     setPhotoPreview(URL.createObjectURL(file));
   }
 
-  // "완주 사진 인증하기" / "다시 촬영하기" 클릭 시 기기의 촬영 모드 진입
+  // "완주 사진 인증하기" / "다시 촬영하기" 클릭 시 OS 카메라 앱(capture 속성)을 여는 input 트리거
   function openCamera() {
     photoInputRef.current?.click();
+  }
+
+  // 카메라 앱 강제 실행이 지원되지 않는 기기(일부 데스크톱/구형 브라우저 등)를 위한
+  // capture 속성 없는 input 트리거 — 갤러리(사진 보관함)에서 직접 선택할 수 있다.
+  function openGallery() {
+    galleryInputRef.current?.click();
   }
 
   async function handlePhotoUpload() {
@@ -144,7 +159,9 @@ export default function StampScanPage({
     setPhotoError("");
     try {
       await uploadFinishPhoto(photoFile);
-      onDone({ status: "success", mode, boothId, checkpointType });
+      // 저장 완료 알림을 잠시 보여준 뒤 완료 콜백으로 전환
+      setStatus(STATUS.PHOTO_SAVED);
+      setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
     } catch (err) {
       setPhotoError(err.message || "사진 업로드 중 오류가 발생했습니다.");
     } finally {
@@ -200,8 +217,8 @@ export default function StampScanPage({
           <div className="mb-4 animate-bounce text-6xl">🎉</div>
           <h2 className="text-2xl font-extrabold text-[#1d4ed8]">완주 인증 완료!</h2>
 
-          {/* 촬영된 사진이 없으면 인증 버튼만, 있으면 미리보기와 저장/재촬영 버튼만 노출 */}
           {!photoPreview ? (
+            /* 촬영된 사진이 없으면 인증 버튼만 노출 */
             <>
               <p className="mt-2 text-sm text-[#5b6c84]">완주를 기념하는 사진을 남겨주세요.</p>
               <button
@@ -211,8 +228,16 @@ export default function StampScanPage({
               >
                 완주 사진 인증하기
               </button>
+              <button
+                type="button"
+                onClick={openGallery}
+                className="mt-3 text-xs font-semibold text-[#5b6c84] underline underline-offset-2"
+              >
+                카메라가 안 열리나요? 갤러리에서 선택하기
+              </button>
             </>
           ) : (
+            /* 촬영 완료 — 미리보기와 저장/재촬영 버튼만 노출 */
             <>
               <img
                 src={photoPreview}
@@ -222,12 +247,12 @@ export default function StampScanPage({
 
               {photoError && <p className="mt-2 text-xs text-red-500">{photoError}</p>}
 
-              <div className="mt-5 flex gap-3">
+              <div className="mt-5 flex w-full max-w-xs flex-col gap-3">
                 <button
                   type="button"
                   disabled={photoUploading}
                   onClick={handlePhotoUpload}
-                  className="rounded-bubble bg-[#1d4ed8] px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+                  className="w-full rounded-bubble bg-[#1d4ed8] px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
                 >
                   {photoUploading ? "업로드 중…" : "사진 저장하고 완료"}
                 </button>
@@ -235,15 +260,23 @@ export default function StampScanPage({
                   type="button"
                   disabled={photoUploading}
                   onClick={openCamera}
-                  className="rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84] disabled:opacity-40"
+                  className="w-full rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84] disabled:opacity-40"
                 >
                   다시 촬영하기
+                </button>
+                <button
+                  type="button"
+                  disabled={photoUploading}
+                  onClick={openGallery}
+                  className="w-full rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84] disabled:opacity-40"
+                >
+                  갤러리에서 선택
                 </button>
               </div>
             </>
           )}
 
-          {/* 실제 촬영/파일 선택은 숨겨진 input이 담당, 버튼 클릭 시 프로그래매틱하게 오픈 */}
+          {/* 모바일 전용: capture 속성으로 OS 카메라 앱을 여는 숨겨진 input */}
           <input
             ref={photoInputRef}
             type="file"
@@ -252,6 +285,25 @@ export default function StampScanPage({
             className="hidden"
             onChange={handlePhotoSelect}
           />
+
+          {/* 카메라 앱 강제 실행이 실패하는 기기를 위한 폴백: capture 속성 없이
+              OS 기본 파일 선택(사진 보관함/갤러리 포함) UI를 여는 숨겨진 input */}
+          <input
+            ref={galleryInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handlePhotoSelect}
+          />
+        </>
+      )}
+
+      {status === STATUS.PHOTO_SAVED && (
+        <>
+          <div className="mb-4 animate-bounce text-6xl">✅</div>
+          <h2 className="text-2xl font-extrabold text-[#1d4ed8]">저장이 완료되었습니다!</h2>
+          <p className="mt-2 text-sm text-[#5b6c84]">완주 인증 사진이 정상적으로 저장되었습니다.</p>
+          <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
         </>
       )}
 
