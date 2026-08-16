@@ -26,7 +26,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
       <section className="soft-card space-y-5 p-4 md:p-7">
         <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
           <div className="min-w-0">
-            <h2 className="text-xl font-bold">축제 안내</h2>
+            <h2 className="text-xl font-bold">캠페인 안내</h2>
             <div className="mt-3 space-y-3 leading-relaxed text-[#4e5f75]">
               <p>
                 세계 자살 예방의 날을 맞아 시민이 함께 걸으며 서로의 안부를 묻고 생명존중문화를 만들어가는「사람사랑 생명사랑 걷기캠페인」에 여러분을 초대합니다.
