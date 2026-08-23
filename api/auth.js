@@ -49,7 +49,7 @@ export default withSentry(async function handler(req, res) {
     if (existing.name !== trimmedName) {
       return res.status(400).json({ error: "입력하신 이름이 기존 등록 정보와 일치하지 않습니다." });
     }
-    identifyUser(existing.id);
+    identifyUser(req, existing.id);
     res.setHeader("Set-Cookie", buildSetCookie(existing.token));
     return res.status(200).json({
       isNew: false,
@@ -69,7 +69,7 @@ export default withSentry(async function handler(req, res) {
     return res.status(500).json({ error: "참여자 등록 중 오류가 발생했습니다." });
   }
 
-  identifyUser(inserted.id);
+  identifyUser(req, inserted.id);
   res.setHeader("Set-Cookie", buildSetCookie(inserted.token));
   return res.status(201).json({
     isNew: true,

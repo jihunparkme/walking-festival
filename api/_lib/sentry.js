@@ -69,11 +69,14 @@ function initSentry() {
 }
 
 /**
- * 예외를 마주한 사용자를 Sentry에서 식별할 수 있도록 참가자 id만 연결한다.
+ * 예외를 마주한 참가자를 Sentry에서 식별할 수 있도록 id를 요청 객체에 표시해 둔다.
+ * 전역 스코프(Sentry.setUser)를 매 요청마다 건드리지 않고, 실제로 예외가 캡처될 때만
+ * (withSentry의 catch에서) 격리된 스코프에 연결한다 — 서버리스 warm 인스턴스가 여러
+ * 요청을 재사용할 때 참가자 id가 다른 요청의 이벤트에 잘못 섞이는 것을 방지한다.
  * 이름/전화번호 등 PII는 절대 전달하지 않는다 — 필요 시 이 id로 Supabase를 조회해 확인한다.
  */
-export function identifyUser(participantId) {
-  Sentry.setUser({ id: String(participantId) });
+export function identifyUser(req, participantId) {
+  req.__participantId = String(participantId);
 }
 
 /**
@@ -87,7 +90,12 @@ export function withSentry(handler) {
     try {
       return await handler(req, res);
     } catch (error) {
-      Sentry.captureException(error);
+      Sentry.withScope((scope) => {
+        if (req.__participantId) {
+          scope.setUser({ id: req.__participantId });
+        }
+        Sentry.captureException(error);
+      });
       await Sentry.flush(2000);
       if (!res.headersSent) {
         res.status(500).json({ error: "서버 오류가 발생했습니다." });

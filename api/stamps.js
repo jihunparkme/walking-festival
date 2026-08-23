@@ -34,7 +34,7 @@ export default withSentry(async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
-  identifyUser(participant.id);
+  identifyUser(req, participant.id);
 
   const { data, error } = await supabase
     .from("stamp_records")

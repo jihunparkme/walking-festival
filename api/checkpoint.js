@@ -48,7 +48,7 @@ export default withSentry(async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
-  identifyUser(participant.id);
+  identifyUser(req, participant.id);
 
   // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
   if (type === "finish" && !participant.is_turn_completed) {

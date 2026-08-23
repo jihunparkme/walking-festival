@@ -52,7 +52,7 @@ export default withSentry(async function handler(req, res) {
       return res.status(401).json({ error: "유효하지 않은 세션입니다." });
     }
 
-    identifyUser(participant.id);
+    identifyUser(req, participant.id);
 
     if (!participant.finish_photo_path) {
       return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
@@ -98,7 +98,7 @@ export default withSentry(async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
-  identifyUser(participant.id);
+  identifyUser(req, participant.id);
 
   if (!participant.is_finish_completed) {
     return res.status(400).json({ error: "완주 인증을 먼저 완료해 주세요." });
