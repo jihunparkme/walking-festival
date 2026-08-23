@@ -14,7 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -55,6 +55,4 @@ async function handler(req, res) {
   }
 
   return res.status(201).json({ success: true, boothId });
-}
-
-export default withSentry(handler);
+});

@@ -15,7 +15,7 @@ function checkAdmin(req, res) {
   return true;
 }
 
-async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (!checkAdmin(req, res)) return;
 
   // GET: 부스 목록 + 참여 인원 수
@@ -115,6 +115,4 @@ async function handler(req, res) {
   }
 
   return res.status(405).json({ error: "Method not allowed" });
-}
-
-export default withSentry(handler);
+});

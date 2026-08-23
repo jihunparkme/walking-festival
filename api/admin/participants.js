@@ -28,7 +28,7 @@ function formatPhone(s) {
   return null;
 }
 
-async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (!checkAdmin(req, res)) return;
 
   if (req.method === "GET") {
@@ -62,6 +62,4 @@ async function handler(req, res) {
   }
 
   return res.status(405).json({ error: "Method not allowed" });
-}
-
-export default withSentry(handler);
+});

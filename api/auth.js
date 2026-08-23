@@ -20,7 +20,7 @@ function buildSetCookie(token) {
   ].join("; ");
 }
 
-async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -73,6 +73,4 @@ async function handler(req, res) {
     isNew: true,
     lotteryNumber: String(inserted.id).padStart(6, "0"),
   });
-}
-
-export default withSentry(handler);
+});

@@ -14,7 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -46,6 +46,4 @@ async function handler(req, res) {
 
   const stamps = (data ?? []).reduce((acc, r) => ({ ...acc, [r.booth_id]: true }), {});
   return res.status(200).json({ stamps });
-}
-
-export default withSentry(handler);
+});

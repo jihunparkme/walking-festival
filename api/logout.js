@@ -2,7 +2,7 @@ import { withSentry } from "./_lib/sentry.js";
 
 const COOKIE_NAME = "wf_token";
 
-function handler(req, res) {
+export default withSentry(function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -12,6 +12,4 @@ function handler(req, res) {
     `${COOKIE_NAME}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
   );
   return res.status(200).json({ ok: true });
-}
-
-export default withSentry(handler);
+});
