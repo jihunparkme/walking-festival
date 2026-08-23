@@ -2,6 +2,54 @@ import * as Sentry from "@sentry/node";
 
 let initialized = false;
 
+// 국내 휴대폰 번호 패턴 (하이픈 유무 무관) — 에러 메시지 등에 섞여 들어온 값을 마스킹
+const PHONE_PATTERN = /01[016789]-?\d{3,4}-?\d{4}/g;
+// 참가자 세션 쿠키 값(토큰)이 텍스트에 그대로 노출되지 않도록 마스킹
+const TOKEN_COOKIE_PATTERN = /(wf_token=)[^;\s]+/g;
+// Sentry 이벤트에서 통째로 제거할 민감 필드 키 (요청/쿠키/헤더 등)
+const SENSITIVE_KEYS = ["cookies", "cookie", "phone", "wf_token", "password"];
+
+/** 문자열 내 전화번호/토큰 등 민감정보를 마스킹한다. */
+function scrubText(value) {
+  if (typeof value !== "string") return value;
+  return value
+    .replace(PHONE_PATTERN, "***-****-****")
+    .replace(TOKEN_COOKIE_PATTERN, "$1***");
+}
+
+/** 객체를 순회하며 민감 필드는 제거하고, 문자열 값은 마스킹한다. */
+function scrubObject(obj) {
+  if (!obj || typeof obj !== "object") return obj;
+  for (const key of Object.keys(obj)) {
+    if (SENSITIVE_KEYS.includes(key.toLowerCase())) {
+      delete obj[key];
+      continue;
+    }
+    const val = obj[key];
+    if (typeof val === "string") {
+      obj[key] = scrubText(val);
+    } else if (val && typeof val === "object") {
+      scrubObject(val);
+    }
+  }
+  return obj;
+}
+
+/**
+ * Sentry로 전송되기 직전 이벤트에서 참가자 이름/전화번호, 세션 쿠키(wf_token) 등
+ * 개인정보(PII)를 마스킹/제거한다. (요청 데이터, 예외 메시지, breadcrumb 전반)
+ */
+function beforeSend(event) {
+  scrubObject(event.request);
+  scrubObject(event.extra);
+  event.breadcrumbs?.forEach((b) => scrubObject(b.data));
+  event.exception?.values?.forEach((v) => {
+    v.value = scrubText(v.value);
+  });
+  if (event.message) event.message = scrubText(event.message);
+  return event;
+}
+
 /** 서버(Serverless Function) Sentry 초기화 — DSN이 없으면 조용히 건너뜀 */
 function initSentry() {
   if (initialized) return;
@@ -15,6 +63,8 @@ function initSentry() {
     environment: process.env.VERCEL_ENV || process.env.NODE_ENV,
     release: process.env.SENTRY_RELEASE || process.env.VERCEL_GIT_COMMIT_SHA,
     tracesSampleRate: 0.2,
+    sendDefaultPii: false,
+    beforeSend,
   });
 }
 
