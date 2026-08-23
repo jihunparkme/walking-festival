@@ -69,6 +69,14 @@ function initSentry() {
 }
 
 /**
+ * 예외를 마주한 사용자를 Sentry에서 식별할 수 있도록 참가자 id만 연결한다.
+ * 이름/전화번호 등 PII는 절대 전달하지 않는다 — 필요 시 이 id로 Supabase를 조회해 확인한다.
+ */
+export function identifyUser(participantId) {
+  Sentry.setUser({ id: String(participantId) });
+}
+
+/**
  * Vercel Serverless Function 핸들러를 감싸 처리되지 않은 예외를 Sentry로 전송한다.
  * 각 핸들러 내부에서 이미 처리한 에러(4xx/5xx 응답)는 그대로 두고,
  * throw 된 예외만 캡처 후 500 응답으로 정리한다.

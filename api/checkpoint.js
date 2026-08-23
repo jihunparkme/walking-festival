@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry } from "./_lib/sentry.js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -47,6 +47,8 @@ export default withSentry(async function handler(req, res) {
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
+
+  identifyUser(participant.id);
 
   // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
   if (type === "finish" && !participant.is_turn_completed) {

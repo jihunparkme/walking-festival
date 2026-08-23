@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry } from "./_lib/sentry.js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -40,6 +40,8 @@ export default withSentry(async function handler(req, res) {
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
+
+  identifyUser(participant.id);
 
   // 도장 INSERT — uq_participant_booth 제약이 중복을 막아 409로 처리됩니다.
   const { error: insertError } = await supabase

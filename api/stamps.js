@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry } from "./_lib/sentry.js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -33,6 +33,8 @@ export default withSentry(async function handler(req, res) {
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
+
+  identifyUser(participant.id);
 
   const { data, error } = await supabase
     .from("stamp_records")

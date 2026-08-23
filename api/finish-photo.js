@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry } from "./_lib/sentry.js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -51,6 +51,9 @@ export default withSentry(async function handler(req, res) {
     if (pError || !participant) {
       return res.status(401).json({ error: "유효하지 않은 세션입니다." });
     }
+
+    identifyUser(participant.id);
+
     if (!participant.finish_photo_path) {
       return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
     }
@@ -94,6 +97,8 @@ export default withSentry(async function handler(req, res) {
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
+
+  identifyUser(participant.id);
 
   if (!participant.is_finish_completed) {
     return res.status(400).json({ error: "완주 인증을 먼저 완료해 주세요." });
