@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -34,7 +35,7 @@ function isImageContentType(contentType) {
 // 서명된 URL의 유효 시간 (초) — 사진 조회 화면 노출 동안만 유효하면 충분
 const SIGNED_URL_EXPIRES_IN = 60 * 10;
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method === "GET") {
     const token = parseCookieToken(req.headers.cookie);
     if (!token) {
@@ -125,3 +126,5 @@ export default async function handler(req, res) {
 
   return res.status(200).json({ success: true, path });
 }
+
+export default withSentry(handler);

@@ -1,3 +1,4 @@
+import { sentryVitePlugin } from "@sentry/vite-plugin";
 import { createClient } from "@supabase/supabase-js";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
@@ -54,8 +55,21 @@ export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), "");
 
   return {
+    build: {
+      // Sentry가 프로덕션 에러의 원본 스택트레이스를 보여줄 수 있도록 소스맵을 생성
+      sourcemap: true,
+    },
     plugins: [
       react(),
+      // SENTRY_AUTH_TOKEN이 설정된 빌드(CI/Vercel)에서만 소스맵을 업로드하고,
+      // 로컬 빌드에서는 조용히 비활성화된다.
+      env.SENTRY_AUTH_TOKEN &&
+        sentryVitePlugin({
+          org: env.SENTRY_ORG,
+          project: env.SENTRY_PROJECT,
+          authToken: env.SENTRY_AUTH_TOKEN,
+          release: { name: env.VITE_SENTRY_RELEASE },
+        }),
       // 로컬 개발 전용: 사용자 API 미들웨어
       {
         name: "local-user-api",

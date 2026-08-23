@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -13,7 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -46,3 +47,5 @@ export default async function handler(req, res) {
   const stamps = (data ?? []).reduce((acc, r) => ({ ...acc, [r.booth_id]: true }), {});
   return res.status(200).json({ stamps });
 }
+
+export default withSentry(handler);

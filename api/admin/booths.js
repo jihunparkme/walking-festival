@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry } from "../_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -14,7 +15,7 @@ function checkAdmin(req, res) {
   return true;
 }
 
-export default async function handler(req, res) {
+async function handler(req, res) {
   if (!checkAdmin(req, res)) return;
 
   // GET: 부스 목록 + 참여 인원 수
@@ -115,3 +116,5 @@ export default async function handler(req, res) {
 
   return res.status(405).json({ error: "Method not allowed" });
 }
+
+export default withSentry(handler);

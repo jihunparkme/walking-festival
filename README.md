@@ -52,3 +52,27 @@ npm run build
 - `src/components/WalkCertifySection.jsx`: 걷기/인증 UI
 - `src/components/BottomNav.jsx`: 하단 탭 네비게이션
 - `src/components/PasswordModal.jsx`: 관리자 비밀번호 모달
+
+## Sentry 연동
+
+프런트엔드(`@sentry/react`)와 서버리스 API(`@sentry/node`)의 예외를 Sentry로 전송합니다.
+DSN이 설정되지 않으면 초기화 로직이 아무 동작도 하지 않으므로, 로컬 개발 시 별도 설정 없이도
+기존과 동일하게 동작합니다.
+
+환경변수 (`.env`, Vercel Project Settings):
+
+| 변수 | 위치 | 용도 |
+|---|---|---|
+| `VITE_SENTRY_DSN` | 클라이언트 | 브라우저 에러 전송용 DSN |
+| `SENTRY_DSN` | 서버(`api/*`) | 서버리스 함수 에러 전송용 DSN |
+| `SENTRY_AUTH_TOKEN` | 빌드(CI/Vercel) | 소스맵 업로드용 토큰 (설정 시에만 업로드 플러그인 활성화) |
+| `SENTRY_ORG` / `SENTRY_PROJECT` | 빌드(CI/Vercel) | 소스맵 업로드 대상 Sentry 조직/프로젝트 |
+| `VITE_SENTRY_RELEASE` | 클라이언트/빌드 | 릴리스 버전 태깅(선택) |
+
+관련 코드:
+
+- `src/lib/sentry.js`: 클라이언트 초기화 (`main.jsx`에서 렌더링 전 호출, `ErrorBoundary`로 감쌈)
+- `api/_lib/sentry.js`: 서버 초기화 및 `withSentry(handler)` 래퍼 — 모든 `api/*.js` 핸들러가
+  처리하지 못한 예외를 캡처해 Sentry로 전송한 뒤 500 응답을 반환
+- `vite.config.js`: 빌드 시 소스맵 생성 + `SENTRY_AUTH_TOKEN`이 있을 때만 `@sentry/vite-plugin`으로
+  소스맵 업로드
