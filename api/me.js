@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import * as Sentry from "@sentry/node";
 import { withSentry } from "./_lib/sentry.js";
 
 const supabase = createClient(
@@ -15,19 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-// TEMP: Sentry 연동 테스트용 강제 에러 — 확인 후 반드시 제거할 것
-function foo() {
-  throw new Error("Sentry 연동 테스트용 강제 에러 (api/me.js)");
-}
-
 export default withSentry(async function handler(req, res) {
-  // TEMP: Sentry 이벤트 전송 테스트
-  try {
-    foo();
-  } catch (e) {
-    Sentry.captureException(e);
-  }
-
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }

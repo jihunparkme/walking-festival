@@ -70,8 +70,5 @@ DSN이 설정되지 않으면 초기화 로직이 아무 동작도 하지 않으
 - `api/_lib/sentry.js`: 서버 초기화 및 `withSentry(handler)` 래퍼 — 모든 `api/*.js` 핸들러가
   처리하지 못한 예외를 캡처해 Sentry로 전송한 뒤 500 응답을 반환
 
-- `src/lib/sentry.js`: 클라이언트 초기화 (`main.jsx`에서 렌더링 전 호출, `ErrorBoundary`로 감쌈)
-- `api/_lib/sentry.js`: 서버 초기화 및 `withSentry(handler)` 래퍼 — 모든 `api/*.js` 핸들러가
-  처리하지 못한 예외를 캡처해 Sentry로 전송한 뒤 500 응답을 반환
-- `vite.config.js`: 빌드 시 소스맵 생성 + `SENTRY_AUTH_TOKEN`이 있을 때만 `@sentry/vite-plugin`으로
-  소스맵 업로드
+> 클라이언트(`@sentry/react`) 및 빌드 소스맵 업로드(`@sentry/vite-plugin`) 연동은
+> 이번 PR 범위에 포함되지 않았으며, 후속 작업에서 별도로 진행합니다.
