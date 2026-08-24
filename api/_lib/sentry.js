@@ -66,9 +66,15 @@ function beforeSend(event) {
       ...(b.message ? { message: scrubText(b.message) } : null),
     }));
   }
-  event.exception?.values?.forEach((v) => {
-    v.value = scrubText(v.value);
-  });
+  if (event.exception?.values) {
+    event.exception = {
+      ...event.exception,
+      values: event.exception.values.map((v) => ({
+        ...v,
+        value: scrubText(v.value),
+      })),
+    };
+  }
   if (event.message) event.message = scrubText(event.message);
   return event;
 }
