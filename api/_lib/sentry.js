@@ -17,32 +17,42 @@ function scrubText(value) {
     .replace(TOKEN_COOKIE_PATTERN, "$1***");
 }
 
-/** 객체를 순회하며 민감 필드는 제거하고, 문자열 값은 마스킹한다. */
-function scrubObject(obj) {
-  if (!obj || typeof obj !== "object") return obj;
-  for (const key of Object.keys(obj)) {
-    if (SENSITIVE_KEYS.includes(key.toLowerCase())) {
-      delete obj[key];
-      continue;
-    }
-    const val = obj[key];
-    if (typeof val === "string") {
-      obj[key] = scrubText(val);
-    } else if (val && typeof val === "object") {
-      scrubObject(val);
-    }
+/**
+ * 값을 순회하며 민감 필드는 제거하고 문자열은 마스킹한 새 값을 반환한다.
+ * 원본 객체는 절대 변경하지 않는다(non-mutating) — Sentry SDK가 넘긴 event를
+ * 그대로 훼손하면 다른 곳에서 동일 참조를 재사용할 때 예기치 않은 부작용이 생길 수 있다.
+ * `seen`으로 방문한 객체를 추적해 순환 참조로 인한 무한 재귀도 방지한다.
+ */
+function scrubDeep(value, seen = new WeakSet()) {
+  if (typeof value === "string") return scrubText(value);
+  if (!value || typeof value !== "object") return value;
+  if (seen.has(value)) return "[Circular]";
+  seen.add(value);
+
+  if (Array.isArray(value)) {
+    return value.map((item) => scrubDeep(item, seen));
   }
-  return obj;
+  const result = {};
+  for (const key of Object.keys(value)) {
+    if (SENSITIVE_KEYS.includes(key.toLowerCase())) continue; // 민감 필드는 통째로 제외
+    result[key] = scrubDeep(value[key], seen);
+  }
+  return result;
 }
 
 /**
  * Sentry로 전송되기 직전 이벤트에서 참가자 이름/전화번호, 세션 쿠키(wf_token) 등
  * 개인정보(PII)를 마스킹/제거한다. (요청 데이터, 예외 메시지, breadcrumb 전반)
+ * 원본 event를 mutate하지 않고, 스크러빙된 값으로 교체한다.
  */
 function beforeSend(event) {
-  scrubObject(event.request);
-  scrubObject(event.extra);
-  event.breadcrumbs?.forEach((b) => scrubObject(b.data));
+  if (event.request) event.request = scrubDeep(event.request);
+  if (event.extra) event.extra = scrubDeep(event.extra);
+  if (event.breadcrumbs) {
+    event.breadcrumbs = event.breadcrumbs.map((b) =>
+      b.data ? { ...b, data: scrubDeep(b.data) } : b
+    );
+  }
   event.exception?.values?.forEach((v) => {
     v.value = scrubText(v.value);
   });
