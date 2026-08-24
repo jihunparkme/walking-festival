@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -34,7 +35,7 @@ function isImageContentType(contentType) {
 // 서명된 URL의 유효 시간 (초) — 사진 조회 화면 노출 동안만 유효하면 충분
 const SIGNED_URL_EXPIRES_IN = 60 * 10;
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method === "GET") {
     const token = parseCookieToken(req.headers.cookie);
     if (!token) {
@@ -50,6 +51,9 @@ export default async function handler(req, res) {
     if (pError || !participant) {
       return res.status(401).json({ error: "유효하지 않은 세션입니다." });
     }
+
+    identifyUser(req, participant.id);
+
     if (!participant.finish_photo_path) {
       return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
     }
@@ -94,6 +98,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
+  identifyUser(req, participant.id);
+
   if (!participant.is_finish_completed) {
     return res.status(400).json({ error: "완주 인증을 먼저 완료해 주세요." });
   }
@@ -124,4 +130,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ success: true, path });
-}
+});

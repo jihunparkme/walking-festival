@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,7 +20,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -46,6 +47,8 @@ export default async function handler(req, res) {
   if (pError || !participant) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
+
+  identifyUser(req, participant.id);
 
   // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
   if (type === "finish" && !participant.is_turn_completed) {
@@ -79,4 +82,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(200).json({ success: true, type });
-}
+});

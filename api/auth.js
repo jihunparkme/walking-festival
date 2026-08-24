@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,7 +20,7 @@ function buildSetCookie(token) {
   ].join("; ");
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -48,6 +49,7 @@ export default async function handler(req, res) {
     if (existing.name !== trimmedName) {
       return res.status(400).json({ error: "입력하신 이름이 기존 등록 정보와 일치하지 않습니다." });
     }
+    identifyUser(req, existing.id);
     res.setHeader("Set-Cookie", buildSetCookie(existing.token));
     return res.status(200).json({
       isNew: false,
@@ -67,9 +69,10 @@ export default async function handler(req, res) {
     return res.status(500).json({ error: "참여자 등록 중 오류가 발생했습니다." });
   }
 
+  identifyUser(req, inserted.id);
   res.setHeader("Set-Cookie", buildSetCookie(inserted.token));
   return res.status(201).json({
     isNew: true,
     lotteryNumber: String(inserted.id).padStart(6, "0"),
   });
-}
+});

@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -13,7 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "GET") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -33,6 +34,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
+  identifyUser(req, participant.id);
+
   return res.status(200).json({
     name: participant.name,
     lotteryNumber: String(participant.id).padStart(6, "0"),
@@ -40,4 +43,4 @@ export default async function handler(req, res) {
     isFinishCompleted: participant.is_finish_completed,
     hasFinishPhoto: Boolean(participant.finish_photo_path),
   });
-}
+});

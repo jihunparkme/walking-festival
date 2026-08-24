@@ -1,4 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
+import { withSentry, identifyUser } from "./_lib/sentry.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -13,7 +14,7 @@ function parseCookieToken(cookieHeader) {
   return match ? match.slice("wf_token=".length) : null;
 }
 
-export default async function handler(req, res) {
+export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
@@ -40,6 +41,8 @@ export default async function handler(req, res) {
     return res.status(401).json({ error: "유효하지 않은 세션입니다." });
   }
 
+  identifyUser(req, participant.id);
+
   // 도장 INSERT — uq_participant_booth 제약이 중복을 막아 409로 처리됩니다.
   const { error: insertError } = await supabase
     .from("stamp_records")
@@ -54,4 +57,4 @@ export default async function handler(req, res) {
   }
 
   return res.status(201).json({ success: true, boothId });
-}
+});
