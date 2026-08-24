@@ -26,6 +26,15 @@ function scrubText(value) {
 function scrubDeep(value, seen = new WeakSet()) {
   if (typeof value === "string") return scrubText(value);
   if (!value || typeof value !== "object") return value;
+
+  // Buffer/TypedArray/ArrayBuffer는 절대 바이트 단위로 순회하지 않는다 —
+  // Object.keys()를 그대로 적용하면 바이트마다 숫자 키가 생겨 원본보다
+  // 훨씬 큰 객체가 되어버린다(예: 1MB 바이너리 → 키 100만 개).
+  if (ArrayBuffer.isView(value) || value instanceof ArrayBuffer) {
+    const byteLength = value.byteLength ?? value.length ?? 0;
+    return `[Binary ${byteLength} bytes]`;
+  }
+
   if (seen.has(value)) return "[Circular]";
   seen.add(value);
 
@@ -49,9 +58,13 @@ function beforeSend(event) {
   if (event.request) event.request = scrubDeep(event.request);
   if (event.extra) event.extra = scrubDeep(event.extra);
   if (event.breadcrumbs) {
-    event.breadcrumbs = event.breadcrumbs.map((b) =>
-      b.data ? { ...b, data: scrubDeep(b.data) } : b
-    );
+    // console 계측 breadcrumb 등은 텍스트가 data가 아니라 message에 담기므로
+    // 둘 다 스크러빙해야 한다.
+    event.breadcrumbs = event.breadcrumbs.map((b) => ({
+      ...b,
+      ...(b.data ? { data: scrubDeep(b.data) } : null),
+      ...(b.message ? { message: scrubText(b.message) } : null),
+    }));
   }
   event.exception?.values?.forEach((v) => {
     v.value = scrubText(v.value);
