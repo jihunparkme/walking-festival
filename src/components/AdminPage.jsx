@@ -93,37 +93,40 @@ function ParticipantsTab() {
       ) : rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-[#8a9ab5]">참여자가 없습니다.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#e2ecf5]">
-          <table className="w-full text-sm">
+        <div
+          className="overflow-x-auto rounded-2xl border border-[#e2ecf5]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="bg-[#f7f9fc] text-left text-xs font-semibold text-[#5f6f88]">
               <tr>
-                <th className="px-3 py-2.5">No.</th>
-                <th className="px-3 py-2.5">이름</th>
-                <th className="px-3 py-2.5">전화번호</th>
-                <th className="px-3 py-2.5 text-center">추첨번호</th>
-                <th className="px-3 py-2.5 text-center">반환점</th>
-                <th className="px-3 py-2.5 text-center">완주</th>
+                <th className="whitespace-nowrap px-3 py-2.5">No.</th>
+                <th className="whitespace-nowrap px-3 py-2.5">이름</th>
+                <th className="whitespace-nowrap px-3 py-2.5">전화번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">추첨번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">반환점</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">완주</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f8]">
               {rows.map((row, idx) => (
                 <tr key={row.id} className="hover:bg-[#fafbfd]">
-                  <td className="px-3 py-2.5 text-[#8a9ab5]">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#8a9ab5]">
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
-                  <td className="px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
-                  <td className="px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
-                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#06539D]">
+                  <td className="whitespace-nowrap px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center font-mono font-bold text-[#06539D]">
                     {String(row.id).padStart(6, "0")}
                   </td>
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
                     {row.is_turn_completed ? (
                       <span className="text-[#22c55e]">✅</span>
                     ) : (
                       <span className="text-[#c9d3e0]">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
                     {row.is_finish_completed ? (
                       <span className="text-[#22c55e]">✅</span>
                     ) : (
