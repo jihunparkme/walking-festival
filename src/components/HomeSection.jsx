@@ -102,7 +102,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
         <button
           type="button"
           onClick={onAdminClick}
-          className="text-[10px] text-[#b0bdd0] hover:text-[#8a9ab5] underline"
+          className="text-[10px] text-[#C2CCDB] hover:text-white underline"
         >
           관리자
         </button>
