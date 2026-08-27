@@ -66,7 +66,7 @@ function ParticipantsTab() {
           value={searchInput}
           onChange={handleInputChange}
           placeholder="이름 또는 전화번호 검색"
-          className="flex-1 rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+          className="flex-1 rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
         />
         {searchInput && (
           <button
@@ -85,7 +85,7 @@ function ParticipantsTab() {
       </p>
 
       {error && (
-        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
+        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#05437E]">{error}</p>
       )}
 
       {loading ? (
@@ -93,37 +93,40 @@ function ParticipantsTab() {
       ) : rows.length === 0 ? (
         <p className="py-8 text-center text-sm text-[#8a9ab5]">참여자가 없습니다.</p>
       ) : (
-        <div className="overflow-x-auto rounded-2xl border border-[#e2ecf5]">
-          <table className="w-full text-sm">
+        <div
+          className="overflow-x-auto rounded-2xl border border-[#e2ecf5]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <table className="w-full min-w-[560px] text-sm">
             <thead className="bg-[#f7f9fc] text-left text-xs font-semibold text-[#5f6f88]">
               <tr>
-                <th className="px-3 py-2.5">No.</th>
-                <th className="px-3 py-2.5">이름</th>
-                <th className="px-3 py-2.5">전화번호</th>
-                <th className="px-3 py-2.5 text-center">추첨번호</th>
-                <th className="px-3 py-2.5 text-center">반환점</th>
-                <th className="px-3 py-2.5 text-center">완주</th>
+                <th className="whitespace-nowrap px-3 py-2.5">No.</th>
+                <th className="whitespace-nowrap px-3 py-2.5">이름</th>
+                <th className="whitespace-nowrap px-3 py-2.5">전화번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">추첨번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">반환점</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">완주</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f8]">
               {rows.map((row, idx) => (
                 <tr key={row.id} className="hover:bg-[#fafbfd]">
-                  <td className="px-3 py-2.5 text-[#8a9ab5]">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#8a9ab5]">
                     {(page - 1) * PAGE_SIZE + idx + 1}
                   </td>
-                  <td className="px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
-                  <td className="px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
-                  <td className="px-3 py-2.5 text-center font-mono font-bold text-[#3b82f6]">
+                  <td className="whitespace-nowrap px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center font-mono font-bold text-[#06539D]">
                     {String(row.id).padStart(6, "0")}
                   </td>
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
                     {row.is_turn_completed ? (
                       <span className="text-[#22c55e]">✅</span>
                     ) : (
                       <span className="text-[#c9d3e0]">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-2.5 text-center">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
                     {row.is_finish_completed ? (
                       <span className="text-[#22c55e]">✅</span>
                     ) : (
@@ -195,7 +198,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           value={form.booth_id}
           onChange={(e) => set("booth_id", e.target.value)}
           required
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
           placeholder="QR 코드에 사용되는 고유 ID (예: booth-1)"
         />
       </div>
@@ -206,7 +209,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           value={form.title}
           onChange={(e) => set("title", e.target.value)}
           required
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
           placeholder="부스 이름"
         />
       </div>
@@ -216,7 +219,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
           type="text"
           value={form.subtitle}
           onChange={(e) => set("subtitle", e.target.value)}
-          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+          className="w-full rounded-xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
           placeholder="부제목"
         />
       </div>
@@ -224,7 +227,7 @@ function BoothForm({ initial = EMPTY_FORM, onSave, onCancel, saving }) {
         <button
           type="submit"
           disabled={saving}
-          className="rounded-full bg-[#3b82f6] px-5 py-2 text-sm font-bold text-white disabled:opacity-60"
+          className="rounded-full bg-[#06539D] px-5 py-2 text-sm font-bold text-white disabled:opacity-60"
         >
           {saving ? "저장 중…" : "저장"}
         </button>
@@ -317,14 +320,14 @@ function BoothsTab() {
             setShowAdd(true);
             setEditingId(null);
           }}
-          className="rounded-full bg-[#3b82f6] px-4 py-2 text-sm font-bold text-white"
+          className="rounded-full bg-[#06539D] px-4 py-2 text-sm font-bold text-white"
         >
           + 부스 추가
         </button>
       </div>
 
       {error && (
-        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
+        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#05437E]">{error}</p>
       )}
 
       {showAdd && (
@@ -359,7 +362,7 @@ function BoothsTab() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#eef2f8] px-2 py-0.5 text-xs text-[#5f6f88]">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-[#eef2f8] px-2 py-0.5 text-xs text-[#5f6f88]">
                           {booth.booth_id}
                         </span>
                         <p className="font-bold text-[#1a2a3a]">{booth.title}</p>
@@ -369,7 +372,7 @@ function BoothsTab() {
                       )}
                       <p className="mt-1.5 text-xs text-[#5f6f88]">
                         참여 인원:{" "}
-                        <span className="font-bold text-[#3b82f6]">
+                        <span className="font-bold text-[#06539D]">
                           {booth.participant_count}명
                         </span>
                       </p>
@@ -388,7 +391,7 @@ function BoothsTab() {
                       <button
                         type="button"
                         onClick={() => setDeleteConfirm(booth.id)}
-                        className="rounded-xl bg-[#eff6ff] px-3 py-1.5 text-xs font-bold text-[#1d4ed8] hover:bg-[#dbeafe]"
+                        className="rounded-xl bg-[#eff6ff] px-3 py-1.5 text-xs font-bold text-[#05437E] hover:bg-[#dbeafe]"
                       >
                         삭제
                       </button>
@@ -421,7 +424,7 @@ function BoothsTab() {
                 type="button"
                 onClick={() => handleDelete(deleteConfirm)}
                 disabled={saving}
-                className="flex-1 rounded-full bg-[#1d4ed8] py-2 text-sm font-bold text-white disabled:opacity-60"
+                className="flex-1 rounded-full bg-[#05437E] py-2 text-sm font-bold text-white disabled:opacity-60"
               >
                 {saving ? "삭제 중…" : "삭제"}
               </button>
@@ -470,7 +473,7 @@ export default function AdminPage({ onExit }) {
               onClick={() => setActiveTab(t.id)}
               className={`rounded-full px-4 py-1.5 text-sm font-bold transition ${
                 activeTab === t.id
-                  ? "bg-[#3b82f6] text-white"
+                  ? "bg-[#06539D] text-white"
                   : "bg-[#eef2f8] text-[#5f6f88] hover:bg-[#e0e9f5]"
               }`}
             >

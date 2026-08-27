@@ -11,6 +11,9 @@ export default {
         creamSun: "#fff4c2",
         limeCloud: "#e8f8d8",
         ink: "#3a3a4a",
+        primary: "#06539D",
+        primaryDark: "#05437E",
+        primaryHover: "#054A8C",
       },
       boxShadow: {
         soft: "0 14px 30px rgba(58, 58, 74, 0.12)",

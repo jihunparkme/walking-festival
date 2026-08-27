@@ -66,7 +66,7 @@ export default function FinishPhotoSection() {
             <button
               type="button"
               onClick={handleRetry}
-              className="rounded-bubble bg-[#1d4ed8] px-5 py-2 text-sm font-bold text-white"
+              className="rounded-bubble bg-[#05437E] px-5 py-2 text-sm font-bold text-white"
             >
               다시 시도
             </button>

@@ -48,10 +48,10 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
             type="text"
             value={name}
             onChange={(e) => onChange("name", e.target.value)}
-            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
             placeholder="실명을 입력해 주세요"
           />
-          {errors.name && <p className="mt-1 text-xs text-[#1d4ed8]">{errors.name}</p>}
+          {errors.name && <p className="mt-1 text-xs text-[#05437E]">{errors.name}</p>}
         </div>
 
         <div>
@@ -61,10 +61,10 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
             inputMode="numeric"
             value={phone}
             onChange={handlePhoneChange}
-            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#3b82f6]"
+            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
             placeholder="010-0000-0000"
           />
-          {errors.phone && <p className="mt-1 text-xs text-[#1d4ed8]">{errors.phone}</p>}
+          {errors.phone && <p className="mt-1 text-xs text-[#05437E]">{errors.phone}</p>}
         </div>
 
         {/* 개인정보 동의 */}
@@ -77,7 +77,7 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
           <button
             type="button"
             onClick={() => setPrivacyOpen((v) => !v)}
-            className="mt-1 text-xs font-semibold text-[#3b82f6] underline"
+            className="mt-1 text-xs font-semibold text-[#06539D] underline"
           >
             {privacyOpen ? "접기" : "전문 보기"}
           </button>
@@ -95,20 +95,20 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
               type="checkbox"
               checked={agreed}
               onChange={(e) => onChange("agreed", e.target.checked)}
-              className="h-4 w-4 accent-[#3b82f6]"
+              className="h-4 w-4 accent-[#06539D]"
             />
             <span className="text-xs font-semibold text-[#3a4a5c]">
               개인정보 수집 및 이용에 동의합니다.
             </span>
           </label>
-          {errors.agreed && <p className="mt-1 text-xs text-[#1d4ed8]">{errors.agreed}</p>}
+          {errors.agreed && <p className="mt-1 text-xs text-[#05437E]">{errors.agreed}</p>}
         </div>
       </div>
 
       <button
         type="button"
         onClick={handleNext}
-        className="mt-5 w-full rounded-full bg-[#3b82f6] py-2.5 text-sm font-bold text-white"
+        className="mt-5 w-full rounded-full bg-[#06539D] py-2.5 text-sm font-bold text-white"
       >
         다음
       </button>
@@ -137,7 +137,7 @@ function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
       </div>
 
       {error && (
-        <p className="mt-3 rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
+        <p className="mt-3 rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#05437E]">{error}</p>
       )}
 
       <div className="mt-5 flex gap-2">
@@ -153,7 +153,7 @@ function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
           type="button"
           onClick={onConfirm}
           disabled={loading}
-          className="flex-1 rounded-full bg-[#3b82f6] py-2.5 text-sm font-bold text-white disabled:opacity-60"
+          className="flex-1 rounded-full bg-[#06539D] py-2.5 text-sm font-bold text-white disabled:opacity-60"
         >
           {loading ? "처리 중…" : "참여 시작하기"}
         </button>
@@ -174,14 +174,14 @@ function DoneStep({ lotteryNumber, onClose }) {
       {lotteryNumber && (
         <div className="mt-4 w-full rounded-2xl bg-[#eff6ff] px-4 py-3">
           <p className="text-xs font-semibold text-[#5f6f88]">나의 추첨번호</p>
-          <p className="mt-1 text-2xl font-extrabold tracking-widest text-[#3b82f6]">{lotteryNumber}</p>
+          <p className="mt-1 text-2xl font-extrabold tracking-widest text-[#06539D]">{lotteryNumber}</p>
           <p className="mt-1 text-xs text-[#8a9ab5]">축제 소개 페이지에서 확인하실 수 있습니다.</p>
         </div>
       )}
       <button
         type="button"
         onClick={onClose}
-        className="mt-6 w-full rounded-full bg-[#3b82f6] py-2.5 text-sm font-bold text-white"
+        className="mt-6 w-full rounded-full bg-[#06539D] py-2.5 text-sm font-bold text-white"
       >
         시작하기
       </button>

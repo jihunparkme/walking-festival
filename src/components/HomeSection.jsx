@@ -7,7 +7,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
     <>
       {participantName && (
         <section className="soft-card flex items-center gap-3 px-5 py-4">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-blue-200/60 text-xl">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#06539D]/20 text-xl">
             👋
           </div>
           <p className="flex-1 text-base font-bold text-[#1a2a3a]">
@@ -81,7 +81,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           <button
             type="button"
             onClick={onLoginClick}
-            className="mt-3 w-full rounded-full bg-[#3b82f6] py-3 text-sm font-bold text-white transition hover:bg-[#2563eb]"
+            className="mt-3 w-full rounded-full bg-[#06539D] py-3 text-sm font-bold text-white transition hover:bg-[#054A8C]"
           >
             걷기 챌린지 참여
           </button>
@@ -93,7 +93,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           <h2 className="text-xl font-bold">나의 추첨번호</h2>
           <p className="mt-1 text-sm text-[#5f6f88]">추첨 이벤트에 사용되는 나의 번호입니다.</p>
           <div className="mt-4 rounded-2xl bg-[#eff6ff] px-4 py-4 text-center">
-            <p className="text-3xl font-extrabold tracking-widest text-[#3b82f6]">{lotteryNumber}</p>
+            <p className="text-3xl font-extrabold tracking-widest text-[#06539D]">{lotteryNumber}</p>
           </div>
         </section>
       )}
@@ -102,7 +102,7 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
         <button
           type="button"
           onClick={onAdminClick}
-          className="text-[10px] text-[#b0bdd0] hover:text-[#8a9ab5] underline"
+          className="text-[10px] text-[#C2CCDB] hover:text-white underline"
         >
           관리자
         </button>
