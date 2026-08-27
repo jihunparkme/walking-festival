@@ -29,7 +29,7 @@ export default function StampCardSection({
               key={item.booth_id}
               className={`relative overflow-hidden rounded-3xl border-2 p-4 ${
                 done
-                  ? "border-transparent bg-blue-200/70"
+                  ? "border-transparent bg-[#06539D]/25"
                   : "border-dashed border-[#b7c6db] bg-white"
               }`}
             >
@@ -42,7 +42,7 @@ export default function StampCardSection({
               )}
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
-              <div className={`mt-3 text-xs font-semibold ${done ? "text-[#1d4ed8]" : "text-[#8a9ab5]"}`}>
+              <div className={`mt-3 text-xs font-semibold ${done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
                 {done ? "✓ 도장 완료" : "QR 스캔 필요"}
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function StampCardSection({
               key={item.key}
               className={`relative overflow-hidden rounded-3xl border-2 p-4 ${
                 item.done
-                  ? "border-transparent bg-blue-200/70"
+                  ? "border-transparent bg-[#06539D]/25"
                   : "border-dashed border-[#b7c6db] bg-white"
               }`}
             >
@@ -72,7 +72,7 @@ export default function StampCardSection({
               )}
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
-              <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#1d4ed8]" : "text-[#8a9ab5]"}`}>
+              <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
                 {item.done ? "✓ 인증 완료" : "QR 스캔 필요"}
               </div>
             </div>

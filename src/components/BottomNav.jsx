@@ -25,7 +25,7 @@ export default function BottomNav({ tab, onChangeTab, isAuthenticated, showFinis
             type="button"
             onClick={() => onChangeTab(item.id)}
             className={`rounded-full px-3 py-2 font-bold transition ${
-              tab === item.id ? "bg-blue-200 text-[#1d4ed8]" : "bg-transparent text-[#6c7b90]"
+              tab === item.id ? "bg-[#06539D]/25 text-[#05437E]" : "bg-transparent text-[#6c7b90]"
             }`}
           >
             {item.label}

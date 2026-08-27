@@ -54,17 +54,17 @@ export default function AdminPasswordModal({ open, onSuccess, onClose }) {
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2.5 text-sm outline-none focus:border-[#3b82f6]"
+            className="w-full rounded-2xl border border-[#c9d5e5] px-3 py-2.5 text-sm outline-none focus:border-[#06539D]"
             placeholder="비밀번호 입력"
             autoFocus
           />
           {error && (
-            <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#1d4ed8]">{error}</p>
+            <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#05437E]">{error}</p>
           )}
           <button
             type="submit"
             disabled={loading}
-            className="w-full rounded-full bg-[#3b82f6] py-2.5 text-sm font-bold text-white disabled:opacity-60"
+            className="w-full rounded-full bg-[#06539D] py-2.5 text-sm font-bold text-white disabled:opacity-60"
           >
             {loading ? "확인 중…" : "확인"}
           </button>

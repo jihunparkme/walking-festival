@@ -198,7 +198,7 @@ export default function StampScanPage({
       {status === STATUS.SUCCESS && (
         <>
           <div className="mb-4 animate-bounce text-6xl">🎉</div>
-          <h2 className="text-2xl font-extrabold text-[#1d4ed8]">
+          <h2 className="text-2xl font-extrabold text-[#05437E]">
             {isCheckpoint ? `${displayTitle} 인증 완료!` : "도장 획득!"}
           </h2>
           <p className="mt-2 text-sm text-[#5b6c84]">
@@ -215,7 +215,7 @@ export default function StampScanPage({
       {status === STATUS.PHOTO && (
         <>
           <div className="mb-4 animate-bounce text-6xl">🎉</div>
-          <h2 className="text-2xl font-extrabold text-[#1d4ed8]">완주 인증 완료!</h2>
+          <h2 className="text-2xl font-extrabold text-[#05437E]">완주 인증 완료!</h2>
 
           {!photoPreview ? (
             /* 촬영된 사진이 없으면 인증 버튼만 노출 */
@@ -224,7 +224,7 @@ export default function StampScanPage({
               <button
                 type="button"
                 onClick={openCamera}
-                className="mt-5 rounded-bubble bg-[#1d4ed8] px-6 py-3 text-sm font-bold text-white"
+                className="mt-5 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
               >
                 완주 사진 인증하기
               </button>
@@ -252,7 +252,7 @@ export default function StampScanPage({
                   type="button"
                   disabled={photoUploading}
                   onClick={handlePhotoUpload}
-                  className="w-full rounded-bubble bg-[#1d4ed8] px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
+                  className="w-full rounded-bubble bg-[#05437E] px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
                 >
                   {photoUploading ? "업로드 중…" : "사진 저장하고 완료"}
                 </button>
@@ -301,7 +301,7 @@ export default function StampScanPage({
       {status === STATUS.PHOTO_SAVED && (
         <>
           <div className="mb-4 animate-bounce text-6xl">✅</div>
-          <h2 className="text-2xl font-extrabold text-[#1d4ed8]">저장이 완료되었습니다!</h2>
+          <h2 className="text-2xl font-extrabold text-[#05437E]">저장이 완료되었습니다!</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">완주 인증 사진이 정상적으로 저장되었습니다.</p>
           <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
         </>
@@ -343,7 +343,7 @@ export default function StampScanPage({
           <button
             type="button"
             onClick={() => onDone({ status: "home" })}
-            className="mt-6 rounded-bubble bg-[#1d4ed8] px-6 py-3 text-sm font-bold text-white"
+            className="mt-6 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
           >
             홈으로 이동
           </button>
