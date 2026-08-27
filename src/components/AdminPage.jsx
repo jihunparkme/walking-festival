@@ -362,7 +362,7 @@ function BoothsTab() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
-                        <span className="rounded-full bg-[#eef2f8] px-2 py-0.5 text-xs text-[#5f6f88]">
+                        <span className="shrink-0 whitespace-nowrap rounded-full bg-[#eef2f8] px-2 py-0.5 text-xs text-[#5f6f88]">
                           {booth.booth_id}
                         </span>
                         <p className="font-bold text-[#1a2a3a]">{booth.title}</p>
