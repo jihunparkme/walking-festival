@@ -35,8 +35,11 @@ export default withSentry(async function handler(req, res) {
     // (stamp_records 전체 로우를 가져와 JS에서 집계하지 않음)
     const { data: countRows, error: countError } = await supabase.rpc("get_booth_stamp_counts");
 
+    // RPC 실패(예: DB에 get_booth_stamp_counts 함수 미생성)를 조용히 넘기면 모든 부스의
+    // 참여 인원이 0으로 잘못 표시되므로, 실패 시에는 명확히 에러를 반환한다.
     if (countError) {
       console.error("booth stamp counts fetch error:", countError);
+      return res.status(500).json({ error: "도장 집계 정보를 불러오는 중 오류가 발생했습니다." });
     }
 
     const booths = mapBoothsWithStats(boothsData, toCountMap(countRows), process.env.QR_SECRET);

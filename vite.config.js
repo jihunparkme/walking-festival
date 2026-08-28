@@ -410,7 +410,16 @@ export default defineConfig(({ mode }) => {
 
               // booth_id별 도장 수 집계 — DB의 GROUP BY 집계 함수로 booth당 1행만 받아온다
               // (stamp_records 전체 로우를 가져와 JS에서 집계하지 않음)
-              const { data: countRows } = await supabase.rpc("get_booth_stamp_counts");
+              const { data: countRows, error: countError } = await supabase.rpc("get_booth_stamp_counts");
+
+              // RPC 실패(예: DB에 get_booth_stamp_counts 함수 미생성)를 조용히 넘기면 모든 부스의
+              // 참여 인원이 0으로 잘못 표시되므로, 실패 시에는 명확히 에러를 반환한다.
+              if (countError) {
+                console.error("[booths GET] stamp counts error:", countError);
+                res.statusCode = 500;
+                res.end(JSON.stringify({ error: "도장 집계 정보를 불러오는 중 오류가 발생했습니다." }));
+                return;
+              }
 
               const booths = mapBoothsWithStats(boothsData, toCountMap(countRows), env.QR_SECRET);
 
