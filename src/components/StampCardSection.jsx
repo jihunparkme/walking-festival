@@ -28,7 +28,11 @@ export default function StampCardSection({
         <h2 className="text-xl font-bold">디지털 도장판</h2>
         <p className="mt-1 text-sm text-[#5b6c84]">부스 QR 코드를 스캔하면 도장이 적립됩니다.</p>
         <p className="mt-0.5 text-xs text-[#8a9ab5]">획득한 도장이 보이지 않는다면 새로고침을 해주세요.</p>
-        <p className="mt-3 flex justify-end"><span className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">{completedStamps}/{boothItems.length} 완료</span></p>
+        <p className="mt-3 flex justify-end">
+          <span className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">
+            🔖 {completedStamps}개 부스 참여 완료
+          </span>
+        </p>
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
