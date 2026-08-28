@@ -251,6 +251,7 @@ function BoothsTab() {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState(null);
+  const [copiedId, setCopiedId] = useState(null);
 
   async function load() {
     setLoading(true);
@@ -315,6 +316,10 @@ function BoothsTab() {
     } catch {
       window.prompt("아래 URL을 복사해 QR 코드 생성에 사용하세요.", url);
     }
+    setCopiedId(boothId);
+    setTimeout(() => {
+      setCopiedId((current) => (current === boothId ? null : current));
+    }, 2000);
   }
 
   return (
@@ -411,13 +416,20 @@ function BoothsTab() {
                     <p className="min-w-0 truncate text-[11px] text-[#8a9ab5]">
                       /stamp?booth={booth.booth_id}&sig={booth.qr_sig}
                     </p>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyQrUrl(booth.booth_id, booth.qr_sig)}
-                      className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-[#3a4a5c] shadow-soft"
-                    >
-                      QR 링크 복사
-                    </button>
+                    <div className="relative shrink-0">
+                      {copiedId === booth.booth_id && (
+                        <span className="absolute -top-8 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-lg bg-[#1a2a3a] px-2 py-1 text-[11px] font-bold text-white shadow-soft after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-4 after:border-transparent after:border-t-[#1a2a3a] after:content-['']">
+                          복사 완료
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleCopyQrUrl(booth.booth_id, booth.qr_sig)}
+                        className="rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-[#3a4a5c] shadow-soft"
+                      >
+                        QR 링크 복사
+                      </button>
+                    </div>
                   </div>
                 </>
               )}
