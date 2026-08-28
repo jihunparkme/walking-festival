@@ -308,6 +308,15 @@ function BoothsTab() {
     }
   }
 
+  async function handleCopyQrUrl(boothId, qrSig) {
+    const url = `${window.location.origin}/stamp?booth=${encodeURIComponent(boothId)}&sig=${qrSig}`;
+    try {
+      await navigator.clipboard.writeText(url);
+    } catch {
+      window.prompt("아래 URL을 복사해 QR 코드 생성에 사용하세요.", url);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -396,6 +405,19 @@ function BoothsTab() {
                         삭제
                       </button>
                     </div>
+                  </div>
+                  {/* booth_id는 서버 서명(qr_sig)과 함께 있을 때만 유효하므로 URL만 봐서는 다른 부스를 유추할 수 없습니다. */}
+                  <div className="mt-2 flex items-center justify-between gap-2 rounded-xl bg-[#f7f9fc] px-3 py-2">
+                    <p className="min-w-0 truncate text-[11px] text-[#8a9ab5]">
+                      /stamp?booth={booth.booth_id}&sig={booth.qr_sig}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyQrUrl(booth.booth_id, booth.qr_sig)}
+                      className="shrink-0 rounded-lg bg-white px-2.5 py-1 text-[11px] font-bold text-[#3a4a5c] shadow-soft"
+                    >
+                      QR 링크 복사
+                    </button>
                   </div>
                 </>
               )}
