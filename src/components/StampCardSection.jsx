@@ -7,6 +7,7 @@ export default function StampCardSection({
   completedStamps,
   isTurnCompleted,
   isFinishCompleted,
+  challengeCompleteStampCount,
 }) {
   const checkpointItems = [
     { key: "turn", title: "반환점", subtitle: "반환점 통과 인증", done: isTurnCompleted },
@@ -22,7 +23,7 @@ export default function StampCardSection({
     });
   }, [boothItems, stamps]);
 
-  const isChallengeCompleted = completedStamps >= 5;
+  const isChallengeCompleted = completedStamps >= challengeCompleteStampCount;
 
   return (
     <section className="soft-card p-4 md:p-7">

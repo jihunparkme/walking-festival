@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import AdminPage from "./components/AdminPage";
 import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
@@ -18,6 +18,9 @@ const STORAGE_KEYS = {
   lotteryNumber: "walkingFestival.lotteryNumber",
   name: "walkingFestival.name",
 };
+
+// 챌린지 완료 기준 부스 참여 개수 (전체 부스 개수와 무관하게 최소 5개 참여 시 완료)
+const CHALLENGE_COMPLETE_STAMP_COUNT = 5;
 
 function readJSON(key, fallback) {
   try {
@@ -68,6 +71,11 @@ export default function App() {
     [boothItems, stamps]
   );
 
+  const handleChangeTab = useCallback((nextTab) => {
+    setTab(nextTab);
+    window.history.replaceState(null, "", `#${nextTab}`);
+  }, []);
+
   // 부스 목록 로드
   useEffect(() => {
     fetchBooths().then(setBoothItems).catch(console.error);
@@ -111,7 +119,7 @@ export default function App() {
       handleChangeTab("home");
     }, 2000);
     return () => clearTimeout(timer);
-  }, [authStatus, showStampScan]);
+  }, [authStatus, showStampScan, handleChangeTab]);
 
   // 세션 확인 후 도장 동기화
   useEffect(() => {
@@ -131,7 +139,7 @@ export default function App() {
     if (authStatus !== "ok" || !isFinishCompleted || !hasFinishPhoto) {
       handleChangeTab("home");
     }
-  }, [tab, authStatus, isFinishCompleted, hasFinishPhoto]);
+  }, [tab, authStatus, isFinishCompleted, hasFinishPhoto, handleChangeTab]);
 
   // 해시가 "#stamp"로 진입했지만 로그인 세션이 없는 경우(비회원 URL 직접 접근/새로고침),
   // 도장판 콘텐츠가 비어 보이는 대신 홈 탭으로 되돌린다.
@@ -140,7 +148,7 @@ export default function App() {
     if (authStatus !== "ok") {
       handleChangeTab("home");
     }
-  }, [tab, authStatus]);
+  }, [tab, authStatus, handleChangeTab]);
 
   async function handleLoginSubmit({ name, phone }) {
     const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone);
@@ -158,11 +166,6 @@ export default function App() {
     setLoginModalOpen(false);
     // DoneStep "시작하기" 또는 기존 사용자 로그인 완료 후 호출
     if (participantName) setAuthStatus("ok");
-  }
-
-  function handleChangeTab(nextTab) {
-    setTab(nextTab);
-    window.history.replaceState(null, "", `#${nextTab}`);
   }
 
   async function handleLogout() {
@@ -189,9 +192,9 @@ export default function App() {
         if (prev[boothId]) return prev; // 이미 인증된 부스면 카운트 중복 방지
         const next = { ...prev, [boothId]: true };
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
-        // 정확히 5번째 부스 인증 시점에만 챌린지 완료 팝업 노출
+        // 챌린지 완료 기준(CHALLENGE_COMPLETE_STAMP_COUNT) 도달 시점에만 챌린지 완료 팝업 노출
         const newCompletedCount = boothItems.filter((item) => next[item.booth_id]).length;
-        if (newCompletedCount === 5) {
+        if (newCompletedCount === CHALLENGE_COMPLETE_STAMP_COUNT) {
           setChallengeCompleteOpen(true);
         }
         return next;
@@ -246,6 +249,7 @@ export default function App() {
                 completedStamps={completedStamps}
                 isTurnCompleted={isTurnCompleted}
                 isFinishCompleted={isFinishCompleted}
+                challengeCompleteStampCount={CHALLENGE_COMPLETE_STAMP_COUNT}
               />
             )}
             {tab === "finishPhoto" && authStatus === "ok" && isFinishCompleted && hasFinishPhoto && (
