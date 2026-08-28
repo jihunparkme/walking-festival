@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import stampSeal from "../assets/stamp-seal.svg";
 
 export default function StampCardSection({
@@ -12,6 +13,15 @@ export default function StampCardSection({
     { key: "finish", title: "완주", subtitle: "완주 인증", done: isFinishCompleted },
   ];
 
+  /** 참여가 완료된 부스가 앞쪽에 오도록 정렬 (완료 여부 외 원래 순서는 유지) */
+  const sortedBoothItems = useMemo(() => {
+    return [...boothItems].sort((a, b) => {
+      const doneA = Boolean(stamps[a.booth_id]);
+      const doneB = Boolean(stamps[b.booth_id]);
+      return doneA === doneB ? 0 : doneA ? -1 : 1;
+    });
+  }, [boothItems, stamps]);
+
   return (
     <section className="soft-card p-4 md:p-7">
       <div>
@@ -22,7 +32,7 @@ export default function StampCardSection({
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-        {boothItems.map((item) => {
+        {sortedBoothItems.map((item) => {
           const done = Boolean(stamps[item.booth_id]);
           return (
             <div
