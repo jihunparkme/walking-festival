@@ -27,6 +27,7 @@ const CHECKPOINT_LABEL = {
  *
  * @param {"booth"|"checkpoint"} mode        - "booth": 부스 도장, "checkpoint": 반환점/완주 인증
  * @param {string}   boothId          - (booth 모드) URL 쿼리에서 읽은 부스 ID
+ * @param {string}   boothSig         - (booth 모드) URL 쿼리에서 읽은 서버 서명(sig) — booth_id와 함께 검증됨
  * @param {string}   boothTitle       - (booth 모드) 부스 표시 이름 (없으면 boothId 사용)
  * @param {"turn"|"finish"} checkpointType - (checkpoint 모드) 체크포인트 종류
  * @param {boolean}  isAuthenticated  - 세션 확인 완료 여부
@@ -35,6 +36,7 @@ const CHECKPOINT_LABEL = {
 export default function StampScanPage({
   mode = "booth",
   boothId,
+  boothSig,
   boothTitle,
   checkpointType,
   isAuthenticated,
@@ -65,7 +67,7 @@ export default function StampScanPage({
       return;
     }
 
-    if (!isCheckpoint && !boothId) {
+    if (!isCheckpoint && (!boothId || !boothSig)) {
       setStatus(STATUS.ERROR);
       setErrorMsg("유효하지 않은 QR 코드입니다.");
       setTimeout(() => onDone({ status: "error" }), 3000);
@@ -76,7 +78,7 @@ export default function StampScanPage({
     setStatus(STATUS.LOADING);
 
     const url = isCheckpoint ? "/api/checkpoint" : "/api/stamp";
-    const body = isCheckpoint ? { type: checkpointType } : { boothId };
+    const body = isCheckpoint ? { type: checkpointType } : { boothId, sig: boothSig };
 
     fetch(url, {
       method: "POST",
@@ -124,7 +126,7 @@ export default function StampScanPage({
         setErrorMsg("네트워크 오류가 발생했습니다.");
         setTimeout(() => onDone({ status: "error" }), 3000);
       });
-  }, [isAuthenticated, boothId, checkpointType]);
+  }, [isAuthenticated, boothId, boothSig, checkpointType]);
 
   // objectURL은 재선택/언마운트 시 이전 값을 해제해 메모리 누수를 방지
   useEffect(() => {
@@ -161,7 +163,7 @@ export default function StampScanPage({
       await uploadFinishPhoto(photoFile);
       // 저장 완료 알림을 잠시 보여준 뒤 완료 콜백으로 전환
       setStatus(STATUS.PHOTO_SAVED);
-      setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
+      setTimeout(() => onDone({ status: "success", mode, checkpointType }), 2000);
     } catch (err) {
       setPhotoError(err.message || "사진 업로드 중 오류가 발생했습니다.");
     } finally {

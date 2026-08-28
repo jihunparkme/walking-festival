@@ -1,6 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
+import { validateStampRequest } from "./api/_lib/qrSign.js";
+import { mapBoothsWithStats } from "./api/_lib/boothStats.js";
 
 /** 요청 바디를 문자열로 읽는 헬퍼 */
 async function readBody(req) {
@@ -178,8 +180,11 @@ export default defineConfig(({ mode }) => {
             const token = parseCookieToken(req.headers.cookie);
             if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
 
-            const { boothId } = await readBody(req);
-            if (!boothId) { res.statusCode = 400; res.end(JSON.stringify({ error: "boothId는 필수입니다." })); return; }
+            const { boothId, sig } = await readBody(req);
+            const validation = validateStampRequest(boothId, sig, env.QR_SECRET);
+            if (!validation.ok) {
+              res.statusCode = validation.status; res.end(JSON.stringify({ error: validation.error })); return;
+            }
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const { data: participant, error: pError } = await supabase
@@ -190,7 +195,7 @@ export default defineConfig(({ mode }) => {
               .from("stamp_records").insert({ participant_id: participant.id, booth_id: boothId });
             if (insertError) {
               if (insertError.code === "23505") {
-                res.statusCode = 409; res.end(JSON.stringify({ error: "이미 도장을 받은 부스입니다." })); return;
+                res.statusCode = 409; res.end(JSON.stringify({ error: "이미 도장을 받은 부스입니다.", boothId })); return;
               }
               res.statusCode = 500; res.end(JSON.stringify({ error: "도장 저장 중 오류가 발생했습니다." })); return;
             }
@@ -407,15 +412,7 @@ export default defineConfig(({ mode }) => {
                 .from("stamp_records")
                 .select("booth_id");
 
-              const countMap = (stampData ?? []).reduce((acc, r) => {
-                acc[r.booth_id] = (acc[r.booth_id] ?? 0) + 1;
-                return acc;
-              }, {});
-
-              const booths = boothsData.map((b) => ({
-                ...b,
-                participant_count: countMap[b.booth_id] ?? 0,
-              }));
+              const booths = mapBoothsWithStats(boothsData, stampData, env.QR_SECRET);
 
               res.statusCode = 200;
               res.end(JSON.stringify({ data: booths }));

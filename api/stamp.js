@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry, identifyUser } from "./_lib/sentry.js";
+import { validateStampRequest } from "./_lib/qrSign.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -20,14 +21,15 @@ export default withSentry(async function handler(req, res) {
   }
 
   const token = parseCookieToken(req.headers.cookie);
-  const { boothId } = req.body ?? {};
+  const { boothId, sig } = req.body ?? {};
 
   if (!token) {
     return res.status(401).json({ error: "인증이 필요합니다." });
   }
 
-  if (!boothId) {
-    return res.status(400).json({ error: "boothId는 필수입니다." });
+  const validation = validateStampRequest(boothId, sig, process.env.QR_SECRET);
+  if (!validation.ok) {
+    return res.status(validation.status).json({ error: validation.error });
   }
 
   // token으로 참여자 조회
@@ -50,7 +52,7 @@ export default withSentry(async function handler(req, res) {
 
   if (insertError) {
     if (insertError.code === "23505") {
-      return res.status(409).json({ error: "이미 도장을 받은 부스입니다." });
+      return res.status(409).json({ error: "이미 도장을 받은 부스입니다.", boothId });
     }
     console.error("stamp insert error:", insertError);
     return res.status(500).json({ error: "도장 저장 중 오류가 발생했습니다." });

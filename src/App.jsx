@@ -26,15 +26,16 @@ function readJSON(key, fallback) {
   }
 }
 
-// /stamp?booth=xxx 또는 /stamp?type=turn|finish URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
+// /stamp?booth=xxx&sig=yyy (부스 QR, booth_id + 서버 서명) 또는 /stamp?type=turn|finish URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
 const urlParams = new URLSearchParams(window.location.search);
 const isStampPath = window.location.pathname === "/stamp";
 const URL_BOOTH_ID = isStampPath ? urlParams.get("booth") : null;
+const URL_BOOTH_SIG = isStampPath ? urlParams.get("sig") : null;
 const URL_CHECKPOINT_TYPE = isStampPath ? urlParams.get("type") : null;
 const VALID_CHECKPOINT_TYPES = ["turn", "finish"];
 const URL_TYPE = VALID_CHECKPOINT_TYPES.includes(URL_CHECKPOINT_TYPE) ? URL_CHECKPOINT_TYPE : null;
 
-if (URL_BOOTH_ID || URL_TYPE) {
+if ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) {
   window.history.replaceState({}, "", "/");
 }
 
@@ -51,7 +52,7 @@ export default function App() {
   const [lotteryNumber, setLotteryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.lotteryNumber) || "");
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
-  const [showStampScan, setShowStampScan] = useState(Boolean(URL_BOOTH_ID || URL_TYPE));
+  const [showStampScan, setShowStampScan] = useState(Boolean((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE));
   const [isTurnCompleted, setIsTurnCompleted] = useState(false);
   const [isFinishCompleted, setIsFinishCompleted] = useState(false);
   const [hasFinishPhoto, setHasFinishPhoto] = useState(false);
@@ -234,10 +235,11 @@ export default function App() {
             showFinishPhotoTab={isFinishCompleted && hasFinishPhoto}
           />
 
-          {showStampScan && (URL_BOOTH_ID || URL_TYPE) && (
+          {showStampScan && ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) && (
             <StampScanPage
               mode={URL_TYPE ? "checkpoint" : "booth"}
               boothId={URL_BOOTH_ID}
+              boothSig={URL_BOOTH_SIG}
               boothTitle={boothItems.find((b) => b.booth_id === URL_BOOTH_ID)?.title}
               checkpointType={URL_TYPE}
               isAuthenticated={authStatus === "ok"}

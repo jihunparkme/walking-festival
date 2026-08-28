@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry } from "../_lib/sentry.js";
+import { mapBoothsWithStats } from "../_lib/boothStats.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -39,15 +40,7 @@ export default withSentry(async function handler(req, res) {
       console.error("stamp_records fetch error:", stampError);
     }
 
-    const countMap = (stampData ?? []).reduce((acc, r) => {
-      acc[r.booth_id] = (acc[r.booth_id] ?? 0) + 1;
-      return acc;
-    }, {});
-
-    const booths = boothsData.map((b) => ({
-      ...b,
-      participant_count: countMap[b.booth_id] ?? 0,
-    }));
+    const booths = mapBoothsWithStats(boothsData, stampData, process.env.QR_SECRET);
 
     return res.status(200).json({ data: booths });
   }
