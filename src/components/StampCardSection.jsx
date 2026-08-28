@@ -37,8 +37,12 @@ export default function StampCardSection({
           </span>
         </p>
         {isChallengeCompleted && (
-          <div className="mt-3 rounded-2xl bg-creamSun px-4 py-3 text-center text-sm font-bold text-[#3a4a5c]">
-            🎉 챌린지 완료! 6번 생명사랑지킴이 챌린지부스에서 상품을 받아가세요!
+          <div className="mt-3 break-keep rounded-2xl bg-creamSun px-4 py-3 text-center text-sm font-bold text-[#3a4a5c]">
+            🎉 챌린지 완료!
+            <br />
+            6번 생명사랑지킴이 챌린지부스에서
+            <br />
+            상품을 받아가세요!
           </div>
         )}
       </div>
