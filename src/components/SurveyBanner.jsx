@@ -14,7 +14,7 @@ export default function SurveyBanner({ message, className = "", badgeClassName =
       href={SURVEY_URL}
       target="_blank"
       rel="noopener noreferrer"
-      className={`flex items-center justify-between gap-3 rounded-bubble bg-creamSun p-4 text-[#5b4a1f] transition hover:brightness-95 ${className}`}
+      className={`relative z-10 flex items-center justify-between gap-3 rounded-bubble bg-creamSun p-4 text-[#5b4a1f] transition hover:brightness-95 ${className}`}
     >
       <span className="text-sm font-bold md:text-base">{message}</span>
       <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-semibold ${badgeClassName}`}>설문 참여하기</span>

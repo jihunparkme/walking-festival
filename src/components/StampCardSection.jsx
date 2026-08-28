@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import stampSeal from "../assets/stamp-seal.svg";
 
 export default function StampCardSection({
@@ -6,11 +7,23 @@ export default function StampCardSection({
   completedStamps,
   isTurnCompleted,
   isFinishCompleted,
+  challengeCompleteStampCount,
 }) {
   const checkpointItems = [
     { key: "turn", title: "반환점", subtitle: "반환점 통과 인증", done: isTurnCompleted },
     { key: "finish", title: "완주", subtitle: "완주 인증", done: isFinishCompleted },
   ];
+
+  /** 참여가 완료된 부스가 앞쪽에 오도록 정렬 (완료 여부 외 원래 순서는 유지) */
+  const sortedBoothItems = useMemo(() => {
+    return [...boothItems].sort((a, b) => {
+      const doneA = Boolean(stamps[a.booth_id]);
+      const doneB = Boolean(stamps[b.booth_id]);
+      return doneA === doneB ? 0 : doneA ? -1 : 1;
+    });
+  }, [boothItems, stamps]);
+
+  const isChallengeCompleted = completedStamps >= challengeCompleteStampCount;
 
   return (
     <section className="soft-card p-4 md:p-7">
@@ -18,11 +31,24 @@ export default function StampCardSection({
         <h2 className="text-xl font-bold">디지털 도장판</h2>
         <p className="mt-1 text-sm text-[#5b6c84]">부스 QR 코드를 스캔하면 도장이 적립됩니다.</p>
         <p className="mt-0.5 text-xs text-[#8a9ab5]">획득한 도장이 보이지 않는다면 새로고침을 해주세요.</p>
-        <p className="mt-3 flex justify-end"><span className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">{completedStamps}/{boothItems.length} 완료</span></p>
+        <p className="mt-3 flex justify-end">
+          <span className="rounded-full bg-limeCloud px-3 py-1 text-sm font-bold">
+            🔖 {completedStamps}개 부스 참여 완료
+          </span>
+        </p>
+        {isChallengeCompleted && (
+          <div className="mt-3 break-keep rounded-2xl bg-creamSun px-4 py-3 text-center text-sm font-bold text-[#3a4a5c]">
+            🎉 챌린지 완료!
+            <br />
+            6번 생명사랑지킴이 챌린지부스에서
+            <br />
+            상품을 받아가세요!
+          </div>
+        )}
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
-        {boothItems.map((item) => {
+        {sortedBoothItems.map((item) => {
           const done = Boolean(stamps[item.booth_id]);
           return (
             <div
@@ -43,7 +69,7 @@ export default function StampCardSection({
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
               <div className={`mt-3 text-xs font-semibold ${done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
-                {done ? "✓ 도장 완료" : "QR 스캔 필요"}
+                {done ? "✓ 참여 완료!" : "QR 인증 필요"}
               </div>
             </div>
           );
@@ -73,7 +99,7 @@ export default function StampCardSection({
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
               <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
-                {item.done ? "✓ 인증 완료" : "QR 스캔 필요"}
+                {item.done ? "✓ 인증 완료" : "QR 인증 필요"}
               </div>
             </div>
           ))}
