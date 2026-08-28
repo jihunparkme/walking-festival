@@ -210,10 +210,10 @@ export default function App() {
               href={SURVEY_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-between gap-3 rounded-bubble bg-[#06539D] px-4 py-3 text-white shadow-soft transition hover:bg-[#054A8C] md:px-6"
+              className="mt-3 flex items-center justify-between gap-3 rounded-bubble bg-creamSun px-4 py-3 text-[#5b4a1f] shadow-soft transition hover:brightness-95 md:px-6"
             >
-              <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!</span>
-              <span className="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
+              <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</span>
+              <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
             </a>
           </header>
 
