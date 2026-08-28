@@ -22,6 +22,8 @@ export default function StampCardSection({
     });
   }, [boothItems, stamps]);
 
+  const isChallengeCompleted = completedStamps >= 5;
+
   return (
     <section className="soft-card p-4 md:p-7">
       <div>
@@ -33,6 +35,11 @@ export default function StampCardSection({
             🔖 {completedStamps}개 부스 참여 완료
           </span>
         </p>
+        {isChallengeCompleted && (
+          <div className="mt-3 rounded-2xl bg-creamSun px-4 py-3 text-center text-sm font-bold text-[#3a4a5c]">
+            🎉 챌린지 완료! 6번 생명사랑지킴이 챌린지부스에서 상품을 받아가세요!
+          </div>
+        )}
       </div>
 
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">

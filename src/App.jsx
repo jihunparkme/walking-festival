@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import AdminPage from "./components/AdminPage";
 import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
+import ChallengeCompleteModal from "./components/ChallengeCompleteModal";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
@@ -60,6 +61,7 @@ export default function App() {
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [challengeCompleteOpen, setChallengeCompleteOpen] = useState(false);
 
   const completedStamps = useMemo(
     () => boothItems.filter((item) => stamps[item.booth_id]).length,
@@ -175,8 +177,14 @@ export default function App() {
       }
     } else if (status === "success" && boothId) {
       setStamps((prev) => {
+        if (prev[boothId]) return prev; // 이미 인증된 부스면 카운트 중복 방지
         const next = { ...prev, [boothId]: true };
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
+        // 정확히 5번째 부스 인증 시점에만 챌린지 완료 팝업 노출
+        const newCompletedCount = boothItems.filter((item) => next[item.booth_id]).length;
+        if (newCompletedCount === 5) {
+          setChallengeCompleteOpen(true);
+        }
         return next;
       });
     }
@@ -189,6 +197,8 @@ export default function App() {
   return (
     <div className="min-h-screen pb-28 text-ink">
       {showAdmin && <AdminPage onExit={() => setShowAdmin(false)} />}
+
+      <ChallengeCompleteModal open={challengeCompleteOpen} onClose={() => setChallengeCompleteOpen(false)} />
 
       {!showAdmin && (
         <>
