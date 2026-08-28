@@ -7,6 +7,7 @@ import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
+import SurveyBanner from "./components/SurveyBanner";
 import { fetchMe, logout, registerOrLogin } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
 import { fetchMyStamps } from "./lib/stamps";
@@ -16,9 +17,6 @@ const STORAGE_KEYS = {
   lotteryNumber: "walkingFestival.lotteryNumber",
   name: "walkingFestival.name",
 };
-
-// 캠페인 설문조사 링크 (Google Forms)
-const SURVEY_URL = "https://forms.gle/wKSByS4PZUct6rgb7";
 
 function readJSON(key, fallback) {
   try {
@@ -205,15 +203,10 @@ export default function App() {
                 희망의 메시지를 함께 나눠 보세요.
               </p>
 
-              <a
-                href={SURVEY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="relative mt-4 flex items-center justify-between gap-3 rounded-bubble bg-creamSun p-4 text-[#5b4a1f] transition hover:brightness-95"
-              >
-                <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</span>
-                <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
-              </a>
+              <SurveyBanner
+                className="mt-4"
+                message={<>📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</>}
+              />
             </div>
           </header>
 

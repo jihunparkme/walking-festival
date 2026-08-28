@@ -1,8 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadFinishPhoto } from "../lib/finishPhoto";
-
-// 캠페인 설문조사 링크 (Google Forms)
-const SURVEY_URL = "https://forms.gle/wKSByS4PZUct6rgb7";
+import SurveyBanner from "./SurveyBanner";
 
 const STATUS = {
   WAITING: "waiting",     // 토큰 없음 — 로그인 모달 대기 중
@@ -219,15 +217,10 @@ export default function StampScanPage({
 
           {isCheckpoint && checkpointType === "turn" ? (
             <>
-              <a
-                href={SURVEY_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-5 flex w-full max-w-xs items-center justify-between gap-3 rounded-bubble bg-creamSun px-4 py-3 text-[#5b4a1f] shadow-soft"
-              >
-                <span className="text-sm font-bold">📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!</span>
-                <span className="shrink-0 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
-              </a>
+              <SurveyBanner
+                className="mt-5 w-full max-w-xs shadow-soft"
+                message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
+              />
               <button
                 type="button"
                 onClick={() => onDone({ status: "success", mode, boothId, checkpointType })}
