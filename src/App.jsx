@@ -204,17 +204,17 @@ export default function App() {
                 따뜻한 걸음으로 생명의 소중함을 전하는 참여형 축제입니다. 부스 미션과 걷기 인증을 완료하고,
                 희망의 메시지를 함께 나눠 보세요.
               </p>
-            </div>
 
-            <a
-              href={SURVEY_URL}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 flex items-center justify-between gap-3 rounded-bubble bg-creamSun px-4 py-3 text-[#5b4a1f] shadow-soft transition hover:brightness-95 md:px-6"
-            >
-              <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</span>
-              <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
-            </a>
+              <a
+                href={SURVEY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="relative mt-4 flex items-center justify-between gap-3 rounded-bubble bg-creamSun p-4 text-[#5b4a1f] transition hover:brightness-95"
+              >
+                <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</span>
+                <span className="shrink-0 rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
+              </a>
+            </div>
           </header>
 
           <main className="mx-auto mt-6 w-full max-w-[30rem] space-y-6 px-4 md:max-w-4xl md:px-6">
