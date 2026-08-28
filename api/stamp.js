@@ -1,29 +1,22 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry, identifyUser } from "./_lib/sentry.js";
+import { withSentry } from "./_lib/sentry.js";
 import { validateStampRequest } from "./_lib/qrSign.js";
+import { parseCookieToken, requireParticipant } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-function parseCookieToken(cookieHeader) {
-  const match = (cookieHeader ?? "")
-    .split(";")
-    .map((s) => s.trim())
-    .find((s) => s.startsWith("wf_token="));
-  return match ? match.slice("wf_token=".length) : null;
-}
-
 export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const token = parseCookieToken(req.headers.cookie);
   const { boothId, sig } = req.body ?? {};
 
-  if (!token) {
+  // 기존 응답 순서(토큰 누락 401 > 서명 검증 오류) 유지를 위해 토큰 존재 여부만 먼저 확인
+  if (!parseCookieToken(req.headers.cookie)) {
     return res.status(401).json({ error: "인증이 필요합니다." });
   }
 
@@ -32,18 +25,8 @@ export default withSentry(async function handler(req, res) {
     return res.status(validation.status).json({ error: validation.error });
   }
 
-  // token으로 참여자 조회
-  const { data: participant, error: pError } = await supabase
-    .from("participants")
-    .select("id")
-    .eq("token", token)
-    .maybeSingle();
-
-  if (pError || !participant) {
-    return res.status(401).json({ error: "유효하지 않은 세션입니다." });
-  }
-
-  identifyUser(req, participant.id);
+  const participant = await requireParticipant(req, res, supabase, "id");
+  if (!participant) return;
 
   // 도장 INSERT — uq_participant_booth 제약이 중복을 막아 409로 처리됩니다.
   const { error: insertError } = await supabase

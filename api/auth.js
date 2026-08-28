@@ -1,24 +1,11 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry, identifyUser } from "./_lib/sentry.js";
+import { buildSetCookie } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
-
-const COOKIE_NAME = "wf_token";
-const COOKIE_MAX_AGE = 180 * 24 * 60 * 60; // 180일
-
-function buildSetCookie(token) {
-  return [
-    `${COOKIE_NAME}=${token}`,
-    "HttpOnly",
-    "Secure",
-    "SameSite=Strict",
-    "Path=/",
-    `Max-Age=${COOKIE_MAX_AGE}`,
-  ].join("; ");
-}
 
 export default withSentry(async function handler(req, res) {
   if (req.method !== "POST") {

@@ -3,6 +3,34 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { validateStampRequest } from "./api/_lib/qrSign.js";
 import { mapBoothsWithStats, toCountMap } from "./api/_lib/boothStats.js";
+import { parseCookieToken, buildSetCookie, buildClearCookie } from "./api/_lib/auth.js";
+
+/**
+ * 쿠키의 token으로 participants를 조회해 세션을 검증한다 (로컬 개발용 Node 스타일 res).
+ * 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ */
+async function requireParticipantLocal(supabase, req, res, selectFields) {
+  const token = parseCookieToken(req.headers.cookie);
+  if (!token) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: "인증이 필요합니다." }));
+    return null;
+  }
+
+  const { data: participant, error } = await supabase
+    .from("participants")
+    .select(selectFields)
+    .eq("token", token)
+    .maybeSingle();
+
+  if (error || !participant) {
+    res.statusCode = 401;
+    res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." }));
+    return null;
+  }
+
+  return participant;
+}
 
 /** 요청 바디를 문자열로 읽는 헬퍼 */
 async function readBody(req) {
@@ -62,20 +90,6 @@ export default defineConfig(({ mode }) => {
       {
         name: "local-user-api",
         configureServer(server) {
-          const COOKIE_NAME = "wf_token";
-          const COOKIE_MAX_AGE = 180 * 24 * 60 * 60;
-
-          function parseCookieToken(cookieHeader) {
-            const match = (cookieHeader ?? "").split(";").map(s => s.trim())
-              .find(s => s.startsWith(`${COOKIE_NAME}=`));
-            return match ? match.slice(COOKIE_NAME.length + 1) : null;
-          }
-
-          function buildSetCookie(token) {
-            // 로컬 개발: Secure 플래그 제외 (HTTP)
-            return `${COOKIE_NAME}=${token}; HttpOnly; SameSite=Strict; Path=/; Max-Age=${COOKIE_MAX_AGE}`;
-          }
-
           // POST /api/auth — 등록/로그인, HttpOnly 쿠키 발급
           server.middlewares.use("/api/auth", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
@@ -97,7 +111,8 @@ export default defineConfig(({ mode }) => {
                 res.statusCode = 400;
                 res.end(JSON.stringify({ error: "입력하신 이름이 기존 등록 정보와 일치하지 않습니다." })); return;
               }
-              res.setHeader("Set-Cookie", buildSetCookie(existing.token));
+              // 로컬 개발: Secure 플래그 제외 (HTTP)
+              res.setHeader("Set-Cookie", buildSetCookie(existing.token, { secure: false }));
               res.statusCode = 200;
               res.end(JSON.stringify({ isNew: false, lotteryNumber: String(existing.id).padStart(6, "0") }));
               return;
@@ -108,7 +123,8 @@ export default defineConfig(({ mode }) => {
             if (insertError) {
               res.statusCode = 500; res.end(JSON.stringify({ error: "참여자 등록 중 오류가 발생했습니다." })); return;
             }
-            res.setHeader("Set-Cookie", buildSetCookie(inserted.token));
+            // 로컬 개발: Secure 플래그 제외 (HTTP)
+            res.setHeader("Set-Cookie", buildSetCookie(inserted.token, { secure: false }));
             res.statusCode = 201;
             res.end(JSON.stringify({ isNew: true, lotteryNumber: String(inserted.id).padStart(6, "0") }));
           });
@@ -120,7 +136,7 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
             // 로컬 개발: Secure 플래그 제외 (HTTP)
-            res.setHeader("Set-Cookie", `${COOKIE_NAME}=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0`);
+            res.setHeader("Set-Cookie", buildClearCookie({ secure: false }));
             res.statusCode = 200;
             res.end(JSON.stringify({ ok: true }));
           });
@@ -131,13 +147,11 @@ export default defineConfig(({ mode }) => {
             if (req.method !== "GET") {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
-
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const { data: participant } = await supabase
-              .from("participants").select("id, name, is_turn_completed, is_finish_completed, finish_photo_path").eq("token", token).maybeSingle();
-            if (!participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            const participant = await requireParticipantLocal(
+              supabase, req, res, "id, name, is_turn_completed, is_finish_completed, finish_photo_path"
+            );
+            if (!participant) return;
 
             res.statusCode = 200;
             res.end(JSON.stringify({
@@ -155,13 +169,9 @@ export default defineConfig(({ mode }) => {
             if (req.method !== "GET") {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
-
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const { data: participant, error: pError } = await supabase
-              .from("participants").select("id").eq("token", token).maybeSingle();
-            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            const participant = await requireParticipantLocal(supabase, req, res, "id");
+            if (!participant) return;
 
             const { data, error } = await supabase.from("stamp_records").select("booth_id").eq("participant_id", participant.id);
             if (error) { res.statusCode = 500; res.end(JSON.stringify({ error: "도장 정보를 불러오는 중 오류가 발생했습니다." })); return; }
@@ -177,8 +187,10 @@ export default defineConfig(({ mode }) => {
             if (req.method !== "POST") {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+            // 기존 응답 순서(토큰 누락 401 > 서명 검증 오류) 유지를 위해 토큰 존재 여부만 먼저 확인
+            if (!parseCookieToken(req.headers.cookie)) {
+              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
+            }
 
             const { boothId, sig } = await readBody(req);
             const validation = validateStampRequest(boothId, sig, env.QR_SECRET);
@@ -187,9 +199,8 @@ export default defineConfig(({ mode }) => {
             }
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const { data: participant, error: pError } = await supabase
-              .from("participants").select("id").eq("token", token).maybeSingle();
-            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            const participant = await requireParticipantLocal(supabase, req, res, "id");
+            if (!participant) return;
 
             const { error: insertError } = await supabase
               .from("stamp_records").insert({ participant_id: participant.id, booth_id: boothId });
@@ -209,8 +220,10 @@ export default defineConfig(({ mode }) => {
             if (req.method !== "POST") {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+            // 기존 응답 순서(토큰 누락 401 > type 오류 400) 유지를 위해 토큰 존재 여부만 먼저 확인
+            if (!parseCookieToken(req.headers.cookie)) {
+              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
+            }
 
             const { type } = await readBody(req);
             const FIELD_BY_TYPE = { turn: "is_turn_completed", finish: "is_finish_completed" };
@@ -218,9 +231,10 @@ export default defineConfig(({ mode }) => {
             if (!field) { res.statusCode = 400; res.end(JSON.stringify({ error: "type은 turn 또는 finish여야 합니다." })); return; }
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const { data: participant, error: pError } = await supabase
-              .from("participants").select(`id, is_turn_completed, finish_photo_path, ${field}`).eq("token", token).maybeSingle();
-            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            const participant = await requireParticipantLocal(
+              supabase, req, res, `id, is_turn_completed, finish_photo_path, ${field}`
+            );
+            if (!participant) return;
 
             // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
             if (type === "finish" && !participant.is_turn_completed) {
@@ -252,14 +266,11 @@ export default defineConfig(({ mode }) => {
           const FINISH_PHOTO_SIGNED_URL_EXPIRES_IN = 60 * 10;
           server.middlewares.use("/api/finish-photo", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
-            const token = parseCookieToken(req.headers.cookie);
-            if (!token) { res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return; }
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
             if (req.method === "GET") {
-              const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-              const { data: participant, error: pError } = await supabase
-                .from("participants").select("id, finish_photo_path").eq("token", token).maybeSingle();
-              if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+              const participant = await requireParticipantLocal(supabase, req, res, "id, finish_photo_path");
+              if (!participant) return;
               if (!participant.finish_photo_path) { res.statusCode = 404; res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." })); return; }
 
               const { data: signed, error: signError } = await supabase.storage
@@ -276,18 +287,19 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
 
+            // 기존 응답 순서(토큰 누락 401 > 사진 데이터 검증 400) 유지를 위해 토큰 존재 여부만 먼저 확인
+            if (!parseCookieToken(req.headers.cookie)) {
+              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
+            }
+
             const { fileBase64, contentType } = await readBody(req);
             if (!fileBase64) { res.statusCode = 400; res.end(JSON.stringify({ error: "사진 데이터가 필요합니다." })); return; }
             if (!isImageContentType(contentType)) {
               res.statusCode = 400; res.end(JSON.stringify({ error: "이미지 파일만 업로드할 수 있습니다." })); return;
             }
 
-            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const { data: participant, error: pError } = await supabase
-              .from("participants")
-              .select("id, name, phone, is_finish_completed")
-              .eq("token", token).maybeSingle();
-            if (pError || !participant) { res.statusCode = 401; res.end(JSON.stringify({ error: "유효하지 않은 세션입니다." })); return; }
+            const participant = await requireParticipantLocal(supabase, req, res, "id, name, phone, is_finish_completed");
+            if (!participant) return;
             if (!participant.is_finish_completed) {
               res.statusCode = 400; res.end(JSON.stringify({ error: "완주 인증을 먼저 완료해 주세요." })); return;
             }
