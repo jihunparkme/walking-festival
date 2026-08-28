@@ -43,7 +43,7 @@ export default function StampCardSection({
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
               <div className={`mt-3 text-xs font-semibold ${done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
-                {done ? "✓ 도장 완료" : "QR 스캔 필요"}
+                {done ? "✓ 참여 완료!" : "QR 인증 필요"}
               </div>
             </div>
           );
@@ -73,7 +73,7 @@ export default function StampCardSection({
               <p className="text-sm font-bold">{item.title}</p>
               <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
               <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
-                {item.done ? "✓ 인증 완료" : "QR 스캔 필요"}
+                {item.done ? "✓ 인증 완료" : "QR 인증 필요"}
               </div>
             </div>
           ))}
