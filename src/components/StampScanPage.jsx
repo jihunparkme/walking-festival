@@ -1,6 +1,9 @@
 import { useEffect, useRef, useState } from "react";
 import { uploadFinishPhoto } from "../lib/finishPhoto";
 
+// 캠페인 설문조사 링크 (Google Forms)
+const SURVEY_URL = "https://forms.gle/wKSByS4PZUct6rgb7";
+
 const STATUS = {
   WAITING: "waiting",     // 토큰 없음 — 로그인 모달 대기 중
   LOADING: "loading",     // API 호출 중
@@ -93,7 +96,10 @@ export default function StampScanPage({
             return;
           }
           setStatus(STATUS.SUCCESS);
-          setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
+          // 반환점 인증은 설문조사 참여를 유도하기 위해 자동 이동 대신 확인 버튼을 노출한다.
+          if (!(isCheckpoint && checkpointType === "turn")) {
+            setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
+          }
         } else if (res.status === 409) {
           const data = await res.json().catch(() => ({}));
           // 완주 인증은 이미 완료됐지만 사진이 아직 등록되지 않은 경우
@@ -210,7 +216,28 @@ export default function StampScanPage({
               <><strong>{displayTitle}</strong> 부스 도장을 받았습니다.</>
             )}
           </p>
-          <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
+
+          {isCheckpoint && checkpointType === "turn" ? (
+            <>
+              <a
+                href={SURVEY_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 block w-full max-w-xs rounded-bubble bg-creamSun px-5 py-3 text-center text-sm font-bold text-[#5b4a1f] shadow-soft"
+              >
+                📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!
+              </a>
+              <button
+                type="button"
+                onClick={() => onDone({ status: "success", mode, boothId, checkpointType })}
+                className="mt-3 w-full max-w-xs rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
+              >
+                확인
+              </button>
+            </>
+          ) : (
+            <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
+          )}
         </>
       )}
 

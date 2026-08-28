@@ -17,6 +17,9 @@ const STORAGE_KEYS = {
   name: "walkingFestival.name",
 };
 
+// 캠페인 설문조사 링크 (Google Forms)
+const SURVEY_URL = "https://forms.gle/wKSByS4PZUct6rgb7";
+
 function readJSON(key, fallback) {
   try {
     const raw = localStorage.getItem(key);
@@ -202,6 +205,16 @@ export default function App() {
                 희망의 메시지를 함께 나눠 보세요.
               </p>
             </div>
+
+            <a
+              href={SURVEY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 flex items-center justify-between gap-3 rounded-bubble bg-[#06539D] px-4 py-3 text-white shadow-soft transition hover:bg-[#054A8C] md:px-6"
+            >
+              <span className="text-sm font-bold md:text-base">📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!</span>
+              <span className="shrink-0 rounded-full bg-white/20 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
+            </a>
           </header>
 
           <main className="mx-auto mt-6 w-full max-w-[30rem] space-y-6 px-4 md:max-w-4xl md:px-6">
