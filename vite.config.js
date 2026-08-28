@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import react from "@vitejs/plugin-react";
 import { defineConfig, loadEnv } from "vite";
 import { validateStampRequest } from "./api/_lib/qrSign.js";
-import { mapBoothsWithStats } from "./api/_lib/boothStats.js";
+import { mapBoothsWithStats, toCountMap } from "./api/_lib/boothStats.js";
 
 /** 요청 바디를 문자열로 읽는 헬퍼 */
 async function readBody(req) {
@@ -408,11 +408,11 @@ export default defineConfig(({ mode }) => {
                 return;
               }
 
-              const { data: stampData } = await supabase
-                .from("stamp_records")
-                .select("booth_id");
+              // booth_id별 도장 수 집계 — DB의 GROUP BY 집계 함수로 booth당 1행만 받아온다
+              // (stamp_records 전체 로우를 가져와 JS에서 집계하지 않음)
+              const { data: countRows } = await supabase.rpc("get_booth_stamp_counts");
 
-              const booths = mapBoothsWithStats(boothsData, stampData, env.QR_SECRET);
+              const booths = mapBoothsWithStats(boothsData, toCountMap(countRows), env.QR_SECRET);
 
               res.statusCode = 200;
               res.end(JSON.stringify({ data: booths }));
