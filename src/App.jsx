@@ -133,6 +133,15 @@ export default function App() {
     }
   }, [tab, authStatus, isFinishCompleted, hasFinishPhoto]);
 
+  // 해시가 "#stamp"로 진입했지만 로그인 세션이 없는 경우(비회원 URL 직접 접근/새로고침),
+  // 도장판 콘텐츠가 비어 보이는 대신 홈 탭으로 되돌린다.
+  useEffect(() => {
+    if (tab !== "stamp" || authStatus === "loading") return;
+    if (authStatus !== "ok") {
+      handleChangeTab("home");
+    }
+  }, [tab, authStatus]);
+
   async function handleLoginSubmit({ name, phone }) {
     const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone);
     setParticipantName(name);
