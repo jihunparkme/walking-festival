@@ -7,6 +7,7 @@ import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
+import SurveyBanner from "./components/SurveyBanner";
 import { fetchMe, logout, registerOrLogin } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
 import { fetchMyStamps } from "./lib/stamps";
@@ -201,6 +202,11 @@ export default function App() {
                 따뜻한 걸음으로 생명의 소중함을 전하는 참여형 축제입니다. 부스 미션과 걷기 인증을 완료하고,
                 희망의 메시지를 함께 나눠 보세요.
               </p>
+
+              <SurveyBanner
+                className="mt-4"
+                message={<>📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</>}
+              />
             </div>
           </header>
 
