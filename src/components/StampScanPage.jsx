@@ -223,9 +223,10 @@ export default function StampScanPage({
                 href={SURVEY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-5 block w-full max-w-xs rounded-bubble bg-creamSun px-5 py-3 text-center text-sm font-bold text-[#5b4a1f] shadow-soft"
+                className="mt-5 flex w-full max-w-xs items-center justify-between gap-3 rounded-bubble bg-creamSun px-4 py-3 text-[#5b4a1f] shadow-soft"
               >
-                📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!
+                <span className="text-sm font-bold">📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!</span>
+                <span className="shrink-0 rounded-full bg-white/60 px-3 py-1 text-xs font-semibold">설문 참여하기</span>
               </a>
               <button
                 type="button"
