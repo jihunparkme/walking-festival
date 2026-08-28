@@ -18,7 +18,7 @@ const JPEG_QUALITY = 0.82;
  * JPEG 재인코딩해 용량을 줄입니다. 리사이즈에 실패하면(구형 브라우저 등) 원본
  * 파일을 그대로 사용해 업로드 자체가 막히지 않도록 합니다.
  */
-async function compressImage(file, { maxDimension = MAX_DIMENSION, quality = JPEG_QUALITY } = {}) {
+export async function compressImage(file, { maxDimension = MAX_DIMENSION, quality = JPEG_QUALITY } = {}) {
   try {
     const bitmap = await createImageBitmap(file);
     const scale = Math.min(1, maxDimension / Math.max(bitmap.width, bitmap.height));
