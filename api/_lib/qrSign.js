@@ -20,3 +20,18 @@ export function verifyBoothSig(boothId, sig, secret) {
   if (a.length !== b.length) return false;
   return timingSafeEqual(a, b);
 }
+
+/**
+ * 도장 적립 요청의 boothId/sig를 검증하고, 실패 시 응답에 바로 쓸 수 있는
+ * { status, error }를 반환합니다. `api/stamp.js`와 `vite.config.js`(로컬 개발용
+ * 미들웨어)에서 동일하게 사용해 두 곳의 검증 로직이 어긋나지 않도록 합니다.
+ */
+export function validateStampRequest(boothId, sig, secret) {
+  if (!boothId || !sig) {
+    return { ok: false, status: 400, error: "유효하지 않은 QR 코드입니다." };
+  }
+  if (!verifyBoothSig(boothId, sig, secret)) {
+    return { ok: false, status: 404, error: "유효하지 않은 QR 코드입니다." };
+  }
+  return { ok: true };
+}

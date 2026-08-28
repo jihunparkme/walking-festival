@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry, identifyUser } from "./_lib/sentry.js";
-import { verifyBoothSig } from "./_lib/qrSign.js";
+import { validateStampRequest } from "./_lib/qrSign.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -27,12 +27,9 @@ export default withSentry(async function handler(req, res) {
     return res.status(401).json({ error: "인증이 필요합니다." });
   }
 
-  if (!boothId || !sig) {
-    return res.status(400).json({ error: "유효하지 않은 QR 코드입니다." });
-  }
-
-  if (!verifyBoothSig(boothId, sig, process.env.QR_SECRET)) {
-    return res.status(404).json({ error: "유효하지 않은 QR 코드입니다." });
+  const validation = validateStampRequest(boothId, sig, process.env.QR_SECRET);
+  if (!validation.ok) {
+    return res.status(validation.status).json({ error: validation.error });
   }
 
   // token으로 참여자 조회
@@ -63,4 +60,3 @@ export default withSentry(async function handler(req, res) {
 
   return res.status(201).json({ success: true, boothId });
 });
-

@@ -309,7 +309,7 @@ function BoothsTab() {
   }
 
   async function handleCopyQrUrl(boothId, qrSig) {
-    const url = `${window.location.origin}/stamp?booth=${encodeURIComponent(boothId)}&sig=${qrSig}`;
+    const url = `${window.location.origin}/stamp?booth=${encodeURIComponent(boothId)}&sig=${encodeURIComponent(qrSig)}`;
     try {
       await navigator.clipboard.writeText(url);
     } catch {
