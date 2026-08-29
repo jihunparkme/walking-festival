@@ -108,19 +108,6 @@ export default function App() {
       .catch(() => setAuthStatus("none"));
   }, []);
 
-  // 스탬프 스캔 진입 시 로그인되어 있지 않으면(세션 없음) 입력 폼 없이 대기 화면만
-  // 계속 노출되므로, "참여자 확인 중" 화면을 잠시 보여준 뒤 홈 화면으로 돌려보낸다.
-  // fetchMe가 즉시 실패하는 경우에도 화면이 순간적으로 스킵되지 않도록 최소 노출 시간을 둔다.
-  useEffect(() => {
-    if (!showStampScan || authStatus !== "none") return;
-    const timer = setTimeout(() => {
-      setShowStampScan(false);
-      window.history.replaceState({}, "", "/");
-      handleChangeTab("home");
-    }, 2000);
-    return () => clearTimeout(timer);
-  }, [authStatus, showStampScan, handleChangeTab]);
-
   // 세션 확인 후 도장 동기화
   useEffect(() => {
     if (authStatus !== "ok") return;
