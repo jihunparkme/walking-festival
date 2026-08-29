@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
-import { withSentry, identifyUser } from "./_lib/sentry.js";
+import { withSentry } from "./_lib/sentry.js";
+import { assertTokenPresent, fetchParticipantByToken, requireParticipant } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -7,14 +8,6 @@ const supabase = createClient(
 );
 
 const BUCKET = "walking-festival";
-
-function parseCookieToken(cookieHeader) {
-  const match = (cookieHeader ?? "")
-    .split(";")
-    .map((s) => s.trim())
-    .find((s) => s.startsWith("wf_token="));
-  return match ? match.slice("wf_token=".length) : null;
-}
 
 // 파일명에 쓸 수 없는 문자 제거 (이름/전화번호를 파일명 일부로 사용)
 // Supabase Storage 키는 한글 등 비 ASCII 문자를 허용하지 않으므로 ASCII 문자만 남긴다.
@@ -37,22 +30,8 @@ const SIGNED_URL_EXPIRES_IN = 60 * 10;
 
 export default withSentry(async function handler(req, res) {
   if (req.method === "GET") {
-    const token = parseCookieToken(req.headers.cookie);
-    if (!token) {
-      return res.status(401).json({ error: "인증이 필요합니다." });
-    }
-
-    const { data: participant, error: pError } = await supabase
-      .from("participants")
-      .select("id, finish_photo_path")
-      .eq("token", token)
-      .maybeSingle();
-
-    if (pError || !participant) {
-      return res.status(401).json({ error: "유효하지 않은 세션입니다." });
-    }
-
-    identifyUser(req, participant.id);
+    const participant = await requireParticipant(req, res, supabase, "id, finish_photo_path");
+    if (!participant) return;
 
     if (!participant.finish_photo_path) {
       return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
@@ -74,10 +53,9 @@ export default withSentry(async function handler(req, res) {
     return res.status(405).json({ error: "Method not allowed" });
   }
 
-  const token = parseCookieToken(req.headers.cookie);
-  if (!token) {
-    return res.status(401).json({ error: "인증이 필요합니다." });
-  }
+  // 기존 응답 순서(토큰 누락 401 > 사진 데이터 검증 400) 유지를 위해 토큰 존재 여부만 먼저 확인
+  const token = assertTokenPresent(req, res);
+  if (!token) return;
 
   const { fileBase64, contentType } = req.body ?? {};
   if (!fileBase64) {
@@ -87,18 +65,15 @@ export default withSentry(async function handler(req, res) {
     return res.status(400).json({ error: "이미지 파일만 업로드할 수 있습니다." });
   }
 
-  // 이름/전화번호는 클라이언트 입력을 신뢰하지 않고 서버가 세션으로 직접 조회
-  const { data: participant, error: pError } = await supabase
-    .from("participants")
-    .select("id, name, phone, is_finish_completed")
-    .eq("token", token)
-    .maybeSingle();
-
-  if (pError || !participant) {
-    return res.status(401).json({ error: "유효하지 않은 세션입니다." });
-  }
-
-  identifyUser(req, participant.id);
+  // 이름/전화번호는 클라이언트 입력을 신뢰하지 않고 서버가 세션으로 직접 조회 (이미 확보한 token 재사용)
+  const participant = await fetchParticipantByToken(
+    req,
+    res,
+    token,
+    supabase,
+    "id, name, phone, is_finish_completed"
+  );
+  if (!participant) return;
 
   if (!participant.is_finish_completed) {
     return res.status(400).json({ error: "완주 인증을 먼저 완료해 주세요." });
