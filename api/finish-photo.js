@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry } from "./_lib/sentry.js";
-import { parseCookieToken, requireParticipant } from "./_lib/auth.js";
+import { assertTokenPresent, fetchParticipantByToken, requireParticipant } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -54,9 +54,8 @@ export default withSentry(async function handler(req, res) {
   }
 
   // 기존 응답 순서(토큰 누락 401 > 사진 데이터 검증 400) 유지를 위해 토큰 존재 여부만 먼저 확인
-  if (!parseCookieToken(req.headers.cookie)) {
-    return res.status(401).json({ error: "인증이 필요합니다." });
-  }
+  const token = assertTokenPresent(req, res);
+  if (!token) return;
 
   const { fileBase64, contentType } = req.body ?? {};
   if (!fileBase64) {
@@ -66,10 +65,11 @@ export default withSentry(async function handler(req, res) {
     return res.status(400).json({ error: "이미지 파일만 업로드할 수 있습니다." });
   }
 
-  // 이름/전화번호는 클라이언트 입력을 신뢰하지 않고 서버가 세션으로 직접 조회
-  const participant = await requireParticipant(
+  // 이름/전화번호는 클라이언트 입력을 신뢰하지 않고 서버가 세션으로 직접 조회 (이미 확보한 token 재사용)
+  const participant = await fetchParticipantByToken(
     req,
     res,
+    token,
     supabase,
     "id, name, phone, is_finish_completed"
   );

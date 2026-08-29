@@ -6,17 +6,25 @@ import { mapBoothsWithStats, toCountMap } from "./api/_lib/boothStats.js";
 import { parseCookieToken, buildSetCookie, buildClearCookie } from "./api/_lib/auth.js";
 
 /**
- * 쿠키의 token으로 participants를 조회해 세션을 검증한다 (로컬 개발용 Node 스타일 res).
- * 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ * 요청 쿠키에 토큰이 존재하는지만 우선 검사한다 (로컬 개발용 Node 스타일 res).
+ * 없으면 401 응답을 직접 보내고 null을 반환한다. 반환된 token은 이후
+ * fetchParticipantByTokenLocal에 그대로 넘겨 재사용하면 되므로 쿠키를 두 번 파싱할 필요가 없다.
  */
-async function requireParticipantLocal(supabase, req, res, selectFields) {
+function assertTokenPresentLocal(req, res) {
   const token = parseCookieToken(req.headers.cookie);
   if (!token) {
     res.statusCode = 401;
     res.end(JSON.stringify({ error: "인증이 필요합니다." }));
     return null;
   }
+  return token;
+}
 
+/**
+ * 이미 확보한 token으로 participants를 조회해 세션을 검증한다 (로컬 개발용 Node 스타일 res).
+ * 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ */
+async function fetchParticipantByTokenLocal(supabase, token, selectFields, res) {
   const { data: participant, error } = await supabase
     .from("participants")
     .select(selectFields)
@@ -30,6 +38,19 @@ async function requireParticipantLocal(supabase, req, res, selectFields) {
   }
 
   return participant;
+}
+
+/**
+ * 쿠키의 token으로 participants를 조회해 세션을 검증한다 (로컬 개발용 Node 스타일 res).
+ * 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ * 토큰 존재 여부와 조회를 한 번에 처리하는 단순 라우트(GET 등)에서 사용하고,
+ * 다른 검증(400 등)보다 토큰 누락 401을 먼저 응답해야 하는 라우트는
+ * assertTokenPresentLocal + fetchParticipantByTokenLocal을 원하는 순서로 직접 조합한다.
+ */
+async function requireParticipantLocal(supabase, req, res, selectFields) {
+  const token = assertTokenPresentLocal(req, res);
+  if (!token) return null;
+  return fetchParticipantByTokenLocal(supabase, token, selectFields, res);
 }
 
 /** 요청 바디를 문자열로 읽는 헬퍼 */
@@ -188,9 +209,8 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
             // 기존 응답 순서(토큰 누락 401 > 서명 검증 오류) 유지를 위해 토큰 존재 여부만 먼저 확인
-            if (!parseCookieToken(req.headers.cookie)) {
-              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
-            }
+            const token = assertTokenPresentLocal(req, res);
+            if (!token) return;
 
             const { boothId, sig } = await readBody(req);
             const validation = validateStampRequest(boothId, sig, env.QR_SECRET);
@@ -199,7 +219,7 @@ export default defineConfig(({ mode }) => {
             }
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const participant = await requireParticipantLocal(supabase, req, res, "id");
+            const participant = await fetchParticipantByTokenLocal(supabase, token, "id", res);
             if (!participant) return;
 
             const { error: insertError } = await supabase
@@ -221,9 +241,8 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 405; res.end(JSON.stringify({ error: "Method not allowed" })); return;
             }
             // 기존 응답 순서(토큰 누락 401 > type 오류 400) 유지를 위해 토큰 존재 여부만 먼저 확인
-            if (!parseCookieToken(req.headers.cookie)) {
-              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
-            }
+            const token = assertTokenPresentLocal(req, res);
+            if (!token) return;
 
             const { type } = await readBody(req);
             const FIELD_BY_TYPE = { turn: "is_turn_completed", finish: "is_finish_completed" };
@@ -231,8 +250,8 @@ export default defineConfig(({ mode }) => {
             if (!field) { res.statusCode = 400; res.end(JSON.stringify({ error: "type은 turn 또는 finish여야 합니다." })); return; }
 
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
-            const participant = await requireParticipantLocal(
-              supabase, req, res, `id, is_turn_completed, finish_photo_path, ${field}`
+            const participant = await fetchParticipantByTokenLocal(
+              supabase, token, `id, is_turn_completed, finish_photo_path, ${field}`, res
             );
             if (!participant) return;
 
@@ -288,9 +307,8 @@ export default defineConfig(({ mode }) => {
             }
 
             // 기존 응답 순서(토큰 누락 401 > 사진 데이터 검증 400) 유지를 위해 토큰 존재 여부만 먼저 확인
-            if (!parseCookieToken(req.headers.cookie)) {
-              res.statusCode = 401; res.end(JSON.stringify({ error: "인증이 필요합니다." })); return;
-            }
+            const token = assertTokenPresentLocal(req, res);
+            if (!token) return;
 
             const { fileBase64, contentType } = await readBody(req);
             if (!fileBase64) { res.statusCode = 400; res.end(JSON.stringify({ error: "사진 데이터가 필요합니다." })); return; }
@@ -298,7 +316,9 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 400; res.end(JSON.stringify({ error: "이미지 파일만 업로드할 수 있습니다." })); return;
             }
 
-            const participant = await requireParticipantLocal(supabase, req, res, "id, name, phone, is_finish_completed");
+            const participant = await fetchParticipantByTokenLocal(
+              supabase, token, "id, name, phone, is_finish_completed", res
+            );
             if (!participant) return;
             if (!participant.is_finish_completed) {
               res.statusCode = 400; res.end(JSON.stringify({ error: "완주 인증을 먼저 완료해 주세요." })); return;

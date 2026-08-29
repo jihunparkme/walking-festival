@@ -37,16 +37,25 @@ export function buildClearCookie({ secure = true } = {}) {
 }
 
 /**
- * 쿠키의 token으로 participants를 조회해 세션을 검증하고, 필요한 필드만 반환한다.
- * 인증 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ * 요청 쿠키에 토큰이 존재하는지만 우선 검사한다. 없으면 401 응답을 직접 보내고 null을 반환한다.
+ * "토큰 누락 401을 다른 검증(400 등)보다 먼저 응답해야 하는" 라우트에서, DB 조회 없이
+ * 가볍게 우선 체크할 때 사용한다. 반환된 token은 이후 fetchParticipantByToken에 그대로
+ * 넘겨 재사용하면 되므로 쿠키를 두 번 파싱할 필요가 없다.
  */
-export async function requireParticipant(req, res, supabase, selectFields) {
+export function assertTokenPresent(req, res) {
   const token = parseCookieToken(req.headers.cookie);
   if (!token) {
     res.status(401).json({ error: "인증이 필요합니다." });
     return null;
   }
+  return token;
+}
 
+/**
+ * 이미 확보한 token으로 participants를 조회해 세션을 검증하고, 필요한 필드만 반환한다.
+ * 인증 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ */
+export async function fetchParticipantByToken(req, res, token, supabase, selectFields) {
   const { data: participant, error } = await supabase
     .from("participants")
     .select(selectFields)
@@ -60,4 +69,17 @@ export async function requireParticipant(req, res, supabase, selectFields) {
 
   identifyUser(req, participant.id);
   return participant;
+}
+
+/**
+ * 쿠키의 token으로 participants를 조회해 세션을 검증하고, 필요한 필드만 반환한다.
+ * 인증 실패 시 401 응답을 직접 보내고 null을 반환하므로, 호출부는 null이면 즉시 return하면 된다.
+ * 토큰 존재 여부와 조회를 한 번에 처리하는 단순 라우트(GET 등)에서 사용하고,
+ * 다른 검증(400 등)보다 토큰 누락 401을 먼저 응답해야 하는 라우트는
+ * assertTokenPresent + fetchParticipantByToken을 원하는 순서로 직접 조합한다.
+ */
+export async function requireParticipant(req, res, supabase, selectFields) {
+  const token = assertTokenPresent(req, res);
+  if (!token) return null;
+  return fetchParticipantByToken(req, res, token, supabase, selectFields);
 }

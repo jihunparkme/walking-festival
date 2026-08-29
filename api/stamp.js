@@ -1,7 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry } from "./_lib/sentry.js";
 import { validateStampRequest } from "./_lib/qrSign.js";
-import { parseCookieToken, requireParticipant } from "./_lib/auth.js";
+import { assertTokenPresent, fetchParticipantByToken } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -16,16 +16,16 @@ export default withSentry(async function handler(req, res) {
   const { boothId, sig } = req.body ?? {};
 
   // 기존 응답 순서(토큰 누락 401 > 서명 검증 오류) 유지를 위해 토큰 존재 여부만 먼저 확인
-  if (!parseCookieToken(req.headers.cookie)) {
-    return res.status(401).json({ error: "인증이 필요합니다." });
-  }
+  const token = assertTokenPresent(req, res);
+  if (!token) return;
 
   const validation = validateStampRequest(boothId, sig, process.env.QR_SECRET);
   if (!validation.ok) {
     return res.status(validation.status).json({ error: validation.error });
   }
 
-  const participant = await requireParticipant(req, res, supabase, "id");
+  // 이미 확보한 token 재사용
+  const participant = await fetchParticipantByToken(req, res, token, supabase, "id");
   if (!participant) return;
 
   // 도장 INSERT — uq_participant_booth 제약이 중복을 막아 409로 처리됩니다.

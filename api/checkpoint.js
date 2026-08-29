@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry } from "./_lib/sentry.js";
-import { parseCookieToken, requireParticipant } from "./_lib/auth.js";
+import { assertTokenPresent, fetchParticipantByToken } from "./_lib/auth.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -21,19 +21,19 @@ export default withSentry(async function handler(req, res) {
   const { type } = req.body ?? {};
 
   // 기존 응답 순서(토큰 누락 401 > type 오류 400) 유지를 위해 토큰 존재 여부만 먼저 확인
-  if (!parseCookieToken(req.headers.cookie)) {
-    return res.status(401).json({ error: "인증이 필요합니다." });
-  }
+  const token = assertTokenPresent(req, res);
+  if (!token) return;
 
   const field = FIELD_BY_TYPE[type];
   if (!field) {
     return res.status(400).json({ error: "type은 turn 또는 finish여야 합니다." });
   }
 
-  // token으로 참여자 조회 (해당 체크포인트 완료 여부 + 반환점 완료 여부 + 완주 사진 등록 여부 함께 조회)
-  const participant = await requireParticipant(
+  // 이미 확보한 token 재사용 (해당 체크포인트 완료 여부 + 반환점 완료 여부 + 완주 사진 등록 여부 함께 조회)
+  const participant = await fetchParticipantByToken(
     req,
     res,
+    token,
     supabase,
     `id, is_turn_completed, finish_photo_path, ${field}`
   );
