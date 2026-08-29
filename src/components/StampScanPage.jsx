@@ -185,14 +185,9 @@ export default function StampScanPage({
           <div className="mb-4 text-5xl">📋</div>
           <h2 className="text-xl font-extrabold">참여자 확인 중</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">아래 폼에서 참여자 정보를 입력해 주세요.</p>
-          <p className="mt-1 text-xs text-[#8a9ab5]">걷기 챌린지 참여 후 다시 시도해 주세요.</p>
-          <button
-            type="button"
-            onClick={() => onDone({ status: "home" })}
-            className="mt-6 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
-          >
-            확인
-          </button>
+          <p className="mt-1 text-xs text-[#8a9ab5]">
+            등록 완료 후 자동으로 {isCheckpoint ? "인증이" : "도장이"} 적립됩니다.
+          </p>
         </>
       )}
 
