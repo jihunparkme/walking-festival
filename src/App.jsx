@@ -167,7 +167,7 @@ export default function App() {
     setTab("home");
   }
 
-  function handleStampDone({ status, mode, boothId, checkpointType }) {
+  function handleStampDone({ status, mode, boothId, checkpointType, scrollToBottom }) {
     if (status === "success" && mode === "checkpoint" && checkpointType) {
       if (checkpointType === "turn") setIsTurnCompleted(true);
       if (checkpointType === "finish") {
@@ -191,6 +191,12 @@ export default function App() {
     window.history.replaceState({}, "", "/");
     // 반환점 미인증 안내 화면의 "홈으로 이동" 버튼 클릭 시 홈 탭으로 이동
     handleChangeTab(status === "home" ? "home" : "stamp");
+    // 참여자 미등록 안내 화면의 "확인" 버튼 클릭 시 홈 화면 가장 아래 영역으로 스크롤
+    if (scrollToBottom) {
+      setTimeout(() => {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+      }, 100);
+    }
   }
 
   return (
