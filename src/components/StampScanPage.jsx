@@ -11,6 +11,7 @@ const STATUS = {
   PHOTO: "photo",         // 완주 인증 완료 — 완주 사진 촬영 대기
   PHOTO_SAVED: "photo_saved", // 완주 사진 업로드(저장) 완료
   TURN_REQUIRED: "turn_required", // 완주 인증 시도했지만 반환점 인증이 먼저 필요함
+  NOT_PARTICIPATING: "not_participating", // 세션 확인 결과 캠페인 미참여(로그인 안 됨) 상태
 };
 
 // 체크포인트(반환점/완주) 표시 문구
@@ -31,7 +32,7 @@ const CHECKPOINT_LABEL = {
  * @param {string}   boothSig         - (booth 모드) URL 쿼리에서 읽은 서버 서명(sig) — booth_id와 함께 검증됨
  * @param {string}   boothTitle       - (booth 모드) 부스 표시 이름 (없으면 boothId 사용)
  * @param {"turn"|"finish"} checkpointType - (checkpoint 모드) 체크포인트 종류
- * @param {boolean}  isAuthenticated  - 세션 확인 완료 여부
+ * @param {"loading"|"ok"|"none"} authStatus - 세션 확인 상태 ("loading": 확인 중, "ok": 로그인됨, "none": 미참여/로그아웃)
  * @param {Function} onDone           - 완료 콜백 ({ status, mode, boothId, checkpointType })
  */
 export default function StampScanPage({
@@ -40,9 +41,10 @@ export default function StampScanPage({
   boothSig,
   boothTitle,
   checkpointType,
-  isAuthenticated,
+  authStatus,
   onDone,
 }) {
+  const isAuthenticated = authStatus === "ok";
   const [status, setStatus] = useState(isAuthenticated ? STATUS.LOADING : STATUS.WAITING);
   const [errorMsg, setErrorMsg] = useState("");
   const processedRef = useRef(false);
@@ -57,6 +59,14 @@ export default function StampScanPage({
 
   const isCheckpoint = mode === "checkpoint";
   const checkpointLabel = CHECKPOINT_LABEL[checkpointType];
+
+  // 세션 확인 결과 로그인되어 있지 않으면(캠페인 미참여) 대기 화면 대신 안내 화면으로 전환한다.
+  // 자동으로 홈으로 이동하지 않고, 사용자가 확인 버튼을 눌러야 홈 하단으로 이동한다.
+  useEffect(() => {
+    if (authStatus === "none") {
+      setStatus((prev) => (prev === STATUS.WAITING ? STATUS.NOT_PARTICIPATING : prev));
+    }
+  }, [authStatus]);
 
   useEffect(() => {
     if (!isAuthenticated || processedRef.current) return;
@@ -184,10 +194,8 @@ export default function StampScanPage({
         <>
           <div className="mb-4 text-5xl">📋</div>
           <h2 className="text-xl font-extrabold">참여자 확인 중</h2>
-          <p className="mt-2 text-sm text-[#5b6c84]">아래 폼에서 참여자 정보를 입력해 주세요.</p>
-          <p className="mt-1 text-xs text-[#8a9ab5]">
-            등록 완료 후 자동으로 {isCheckpoint ? "인증이" : "도장이"} 적립됩니다.
-          </p>
+          <p className="mt-2 text-sm text-[#5b6c84]">참여자 정보를 확인 중입니다.</p>
+          <p className="mt-1 text-xs text-[#8a9ab5]">잠시만 기다려 주세요.</p>
         </>
       )}
 
@@ -369,6 +377,25 @@ export default function StampScanPage({
             className="mt-6 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
           >
             홈으로 이동
+          </button>
+        </>
+      )}
+
+      {status === STATUS.NOT_PARTICIPATING && (
+        <>
+          <div className="mb-4 text-5xl">⚠️</div>
+          <h2 className="text-xl font-extrabold">캠페인 미참여 상태</h2>
+          <p className="mt-2 text-sm text-[#5b6c84]">
+            홈 화면에서 걷기 챌린지 참여 버튼을 통해 참여 후
+            <br />
+            다시 시도해 주세요.
+          </p>
+          <button
+            type="button"
+            onClick={() => onDone({ status: "not_participating" })}
+            className="mt-6 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
+          >
+            확인
           </button>
         </>
       )}
