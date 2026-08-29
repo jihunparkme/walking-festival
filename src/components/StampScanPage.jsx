@@ -183,8 +183,8 @@ export default function StampScanPage({
       {status === STATUS.WAITING && (
         <>
           <div className="mb-4 text-5xl">📋</div>
-          <h2 className="text-xl font-extrabold">참여자 확인 중</h2>
-          <p className="mt-2 text-sm text-[#5b6c84]">홈 화면에서 걷기 챌린지 참여 버튼을 통해 참여 후<br />다시 시도해 주세요.</p>
+          <h2 className="text-xl font-extrabold">캠페인 미참여 상태</h2>
+          <p className="mt-1 text-sm text-[#5b6c84]">⚠️ 홈 화면에서 걷기 챌린지 참여 버튼을 통해 참여 후<br />다시 시도해 주세요.</p>
           <button
             type="button"
             onClick={() => onDone({ status: "home", scrollToBottom: true })}
