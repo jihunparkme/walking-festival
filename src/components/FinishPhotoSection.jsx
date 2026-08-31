@@ -63,8 +63,7 @@ export default function FinishPhotoSection({ onPhotoUploaded }) {
   }, [retryCount]);
 
   function handleRetry() {
-    autoRetriedRef.current = false;
-    setRetryCount((n) => n + 1);
+    window.location.reload();
   }
 
   // 서명된 URL 만료 등으로 이미지 로드가 실패하면, 최초 1회에 한해 새 URL을
