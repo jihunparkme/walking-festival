@@ -30,8 +30,13 @@ const SIGNED_URL_EXPIRES_IN = 60 * 10;
 
 export default withSentry(async function handler(req, res) {
   if (req.method === "GET") {
-    const participant = await requireParticipant(req, res, supabase, "id, finish_photo_path");
+    const participant = await requireParticipant(req, res, supabase, "id, is_finish_completed, finish_photo_path");
     if (!participant) return;
+
+    // 완주 인증조차 하지 않은 참여자는 이 메뉴에 접근할 수 없다 (URL 직접 접근 등 방어)
+    if (!participant.is_finish_completed) {
+      return res.status(403).json({ error: "완주 인증을 먼저 완료해 주세요." });
+    }
 
     // 사진 촬영 없이 완주 인증만 완료한 참여자도 있을 수 있는 정상 상태이므로
     // 오류(404)가 아닌 200 + url: null로 응답한다 (브라우저 콘솔에 불필요한

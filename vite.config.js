@@ -288,8 +288,12 @@ export default defineConfig(({ mode }) => {
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
 
             if (req.method === "GET") {
-              const participant = await requireParticipantLocal(supabase, req, res, "id, finish_photo_path");
+              const participant = await requireParticipantLocal(supabase, req, res, "id, is_finish_completed, finish_photo_path");
               if (!participant) return;
+              if (!participant.is_finish_completed) {
+                // 완주 인증조차 하지 않은 참여자는 이 메뉴에 접근할 수 없다 (URL 직접 접근 등 방어)
+                res.statusCode = 403; res.end(JSON.stringify({ error: "완주 인증을 먼저 완료해 주세요." })); return;
+              }
               if (!participant.finish_photo_path) {
                 // 사진 촬영 없이 완주 인증만 완료한 정상 상태이므로 200 + url: null로 응답
                 res.statusCode = 200; res.end(JSON.stringify({ url: null })); return;

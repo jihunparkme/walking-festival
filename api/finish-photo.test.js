@@ -74,7 +74,7 @@ describe("GET /api/finish-photo", () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({
-        participantResult: { data: { id: 1, finish_photo_path: null }, error: null },
+        participantResult: { data: { id: 1, is_finish_completed: true, finish_photo_path: null }, error: null },
         updateResult: { error: null },
         signedUrlResult: { data: null, error: null },
         uploadResult: { error: null },
@@ -91,11 +91,32 @@ describe("GET /api/finish-photo", () => {
     expect(res.body).toEqual({ url: null });
   });
 
+  it("완주 인증을 완료하지 않았으면 403을 응답한다", async () => {
+    const { createClient } = await import("@supabase/supabase-js");
+    createClient.mockReturnValue(
+      createSupabaseMock({
+        participantResult: { data: { id: 1, is_finish_completed: false, finish_photo_path: null }, error: null },
+        updateResult: { error: null },
+        signedUrlResult: { data: null, error: null },
+        uploadResult: { error: null },
+      })
+    );
+
+    const handler = (await import("./finish-photo.js")).default;
+    const req = createReq({ method: "GET", cookie: "wf_token=good-token" });
+    const res = createRes();
+
+    await handler(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(403);
+    expect(res.body).toEqual({ error: "완주 인증을 먼저 완료해 주세요." });
+  });
+
   it("등록된 사진이 있으면 서명된 URL을 200으로 응답한다", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({
-        participantResult: { data: { id: 1, finish_photo_path: "finish-photos/a.jpg" }, error: null },
+        participantResult: { data: { id: 1, is_finish_completed: true, finish_photo_path: "finish-photos/a.jpg" }, error: null },
         updateResult: { error: null },
         signedUrlResult: { data: { signedUrl: "https://example.com/signed" }, error: null },
         uploadResult: { error: null },
