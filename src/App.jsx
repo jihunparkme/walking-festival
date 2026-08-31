@@ -119,14 +119,15 @@ export default function App() {
       .catch(console.error);
   }, [authStatus]);
 
-  // 새로고침 등으로 해시가 "#finishPhoto"로 복원됐지만 접근 조건(완주 인증 + 사진 등록)이
-  // 아직 충족되지 않은 경우(세션 만료, 사진 미등록 등) 홈 탭으로 되돌린다.
+  // 새로고침 등으로 해시가 "#finishPhoto"로 복원됐지만 접근 조건(완주 인증 완료)이
+  // 아직 충족되지 않은 경우(세션 만료 등) 홈 탭으로 되돌린다.
+  // 사진 촬영 없이도 완주 인증이 가능하므로 사진 등록 여부(hasFinishPhoto)는 더 이상 조건이 아니다.
   useEffect(() => {
     if (tab !== "finishPhoto" || authStatus === "loading") return;
-    if (authStatus !== "ok" || !isFinishCompleted || !hasFinishPhoto) {
+    if (authStatus !== "ok" || !isFinishCompleted) {
       handleChangeTab("home");
     }
-  }, [tab, authStatus, isFinishCompleted, hasFinishPhoto, handleChangeTab]);
+  }, [tab, authStatus, isFinishCompleted, handleChangeTab]);
 
   // 해시가 "#stamp"로 진입했지만 로그인 세션이 없는 경우(비회원 URL 직접 접근/새로고침),
   // 도장판 콘텐츠가 비어 보이는 대신 홈 탭으로 되돌린다.
@@ -167,12 +168,12 @@ export default function App() {
     setTab("home");
   }
 
-  function handleStampDone({ status, mode, boothId, checkpointType }) {
+  function handleStampDone({ status, mode, boothId, checkpointType, skipPhoto }) {
     if (status === "success" && mode === "checkpoint" && checkpointType) {
       if (checkpointType === "turn") setIsTurnCompleted(true);
       if (checkpointType === "finish") {
         setIsFinishCompleted(true);
-        setHasFinishPhoto(true);
+        if (!skipPhoto) setHasFinishPhoto(true);
       }
     } else if (status === "success" && boothId) {
       setStamps((prev) => {
@@ -191,7 +192,9 @@ export default function App() {
     window.history.replaceState({}, "", "/");
     // 반환점 미인증 안내 화면 및 캠페인 미참여 안내 화면의 확인 버튼 클릭 시 홈 탭으로 이동
     const isHomeBound = status === "home" || status === "not_participating";
-    handleChangeTab(isHomeBound ? "home" : "stamp");
+    // 사진 촬영 없이 완주 인증한 경우 완주 사진 메뉴로 바로 이동
+    const targetTab = isHomeBound ? "home" : skipPhoto ? "finishPhoto" : "stamp";
+    handleChangeTab(targetTab);
     if (status === "not_participating") {
       // 홈 탭 렌더링(참여 버튼 등) 이후 화면 가장 아래 영역으로 스크롤 이동
       setTimeout(() => {
@@ -246,8 +249,8 @@ export default function App() {
                 challengeCompleteStampCount={CHALLENGE_COMPLETE_STAMP_COUNT}
               />
             )}
-            {tab === "finishPhoto" && authStatus === "ok" && isFinishCompleted && hasFinishPhoto && (
-              <FinishPhotoSection />
+            {tab === "finishPhoto" && authStatus === "ok" && isFinishCompleted && (
+              <FinishPhotoSection onPhotoUploaded={() => setHasFinishPhoto(true)} />
             )}
           </main>
 
@@ -255,7 +258,7 @@ export default function App() {
             tab={tab}
             onChangeTab={handleChangeTab}
             isAuthenticated={authStatus === "ok"}
-            showFinishPhotoTab={isFinishCompleted && hasFinishPhoto}
+            showFinishPhotoTab={isFinishCompleted}
           />
 
           {showStampScan && ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) && (
