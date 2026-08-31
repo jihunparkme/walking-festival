@@ -33,8 +33,11 @@ export default withSentry(async function handler(req, res) {
     const participant = await requireParticipant(req, res, supabase, "id, finish_photo_path");
     if (!participant) return;
 
+    // 사진 촬영 없이 완주 인증만 완료한 참여자도 있을 수 있는 정상 상태이므로
+    // 오류(404)가 아닌 200 + url: null로 응답한다 (브라우저 콘솔에 불필요한
+    // 실패 로그가 남는 것도 방지).
     if (!participant.finish_photo_path) {
-      return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
+      return res.status(200).json({ url: null });
     }
 
     const { data: signed, error: signError } = await supabase.storage

@@ -290,7 +290,10 @@ export default defineConfig(({ mode }) => {
             if (req.method === "GET") {
               const participant = await requireParticipantLocal(supabase, req, res, "id, finish_photo_path");
               if (!participant) return;
-              if (!participant.finish_photo_path) { res.statusCode = 404; res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." })); return; }
+              if (!participant.finish_photo_path) {
+                // 사진 촬영 없이 완주 인증만 완료한 정상 상태이므로 200 + url: null로 응답
+                res.statusCode = 200; res.end(JSON.stringify({ url: null })); return;
+              }
 
               const { data: signed, error: signError } = await supabase.storage
                 .from("walking-festival")

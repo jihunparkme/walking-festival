@@ -70,7 +70,7 @@ describe("GET /api/finish-photo", () => {
     expect(res.body).toEqual({ error: "인증이 필요합니다." });
   });
 
-  it("등록된 완주 사진이 없으면 404를 응답한다", async () => {
+  it("등록된 완주 사진이 없으면 200과 url: null을 응답한다 (사진 촬영 없이 완주 인증한 정상 상태)", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({
@@ -87,7 +87,8 @@ describe("GET /api/finish-photo", () => {
 
     await handler(req, res);
 
-    expect(res.status).toHaveBeenCalledWith(404);
+    expect(res.status).toHaveBeenCalledWith(200);
+    expect(res.body).toEqual({ url: null });
   });
 
   it("등록된 사진이 있으면 서명된 URL을 200으로 응답한다", async () => {
