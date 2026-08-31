@@ -163,6 +163,11 @@ export default function StampScanPage({
     photoInputRef.current?.click();
   }
 
+  // "사진 촬영 없이 인증하기" 클릭 시 사진 등록 없이 바로 완주 사진 메뉴로 이동한다.
+  function handleSkipPhoto() {
+    onDone({ status: "success", mode, checkpointType, skipPhoto: true });
+  }
+
   // 카메라 앱 강제 실행이 지원되지 않는 기기(일부 데스크톱/구형 브라우저 등)를 위한
   // capture 속성 없는 input 트리거 — 갤러리(사진 보관함)에서 직접 선택할 수 있다.
   function openGallery() {
@@ -258,6 +263,13 @@ export default function StampScanPage({
                 className="mt-5 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
               >
                 완주 사진 인증하기
+              </button>
+              <button
+                type="button"
+                onClick={handleSkipPhoto}
+                className="mt-4 w-full max-w-xs rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84]"
+              >
+                사진 촬영 없이 인증하기
               </button>
               <button
                 type="button"

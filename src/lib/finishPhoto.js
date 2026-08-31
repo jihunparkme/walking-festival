@@ -68,9 +68,13 @@ export async function uploadFinishPhoto(file) {
 /**
  * 등록된 완주 인증 사진의 서명된 URL(임시, private 버킷)을 조회합니다.
  * HttpOnly 쿠키로 참여자를 식별하므로 별도 인증 헤더 불필요.
+ * 아직 등록된 사진이 없는 경우(404)는 오류로 취급하지 않고 null을 반환한다.
+ * (사진 촬영 없이 완주 인증만 완료한 참여자도 완주 사진 메뉴에 접근할 수 있기 때문)
  */
 export async function fetchFinishPhotoUrl() {
   const res = await fetch("/api/finish-photo", { method: "GET" });
+
+  if (res.status === 404) return null;
 
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
