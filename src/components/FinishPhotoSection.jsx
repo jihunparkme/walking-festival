@@ -1,5 +1,8 @@
 import { useEffect, useRef, useState } from "react";
-import { fetchFinishPhotoUrl, uploadFinishPhoto } from "../lib/finishPhoto";
+import { fetchFinishPhotoUrl } from "../lib/finishPhoto";
+import { useFinishPhotoCapture } from "../lib/useFinishPhotoCapture";
+import FinishPhotoCaptureInputs from "./FinishPhotoCaptureInputs";
+import FinishPhotoPreviewActions from "./FinishPhotoPreviewActions";
 
 /**
  * 완주 인증 사진 조회 탭.
@@ -19,13 +22,22 @@ export default function FinishPhotoSection({ onPhotoUploaded }) {
   const [retryCount, setRetryCount] = useState(0);
   const autoRetriedRef = useRef(false);
 
-  // 사진 미등록(empty) 상태에서 카메라/갤러리로 촬영 또는 선택 중인 사진
-  const [photoFile, setPhotoFile] = useState(null);
-  const [photoPreview, setPhotoPreview] = useState("");
-  const [photoUploading, setPhotoUploading] = useState(false);
-  const [photoError, setPhotoError] = useState("");
-  const photoInputRef = useRef(null);
-  const galleryInputRef = useRef(null);
+  // 사진 미등록(empty) 상태에서 카메라/갤러리로 촬영 또는 선택한 사진을 업로드
+  const {
+    photoPreview,
+    photoUploading,
+    photoError,
+    photoInputRef,
+    galleryInputRef,
+    openCamera,
+    openGallery,
+    handlePhotoSelect,
+    uploadPhoto,
+  } = useFinishPhotoCapture(() => {
+    onPhotoUploaded?.();
+    // 업로드한 사진을 바로 보여주기 위해 서명된 URL을 다시 조회
+    setRetryCount((n) => n + 1);
+  });
 
   useEffect(() => {
     let cancelled = false;
@@ -50,52 +62,9 @@ export default function FinishPhotoSection({ onPhotoUploaded }) {
     };
   }, [retryCount]);
 
-  // objectURL은 재선택/언마운트 시 이전 값을 해제해 메모리 누수를 방지
-  useEffect(() => {
-    return () => {
-      if (photoPreview) URL.revokeObjectURL(photoPreview);
-    };
-  }, [photoPreview]);
-
   function handleRetry() {
     autoRetriedRef.current = false;
     setRetryCount((n) => n + 1);
-  }
-
-  function handlePhotoSelect(e) {
-    const file = e.target.files?.[0];
-    e.target.value = ""; // 동일 파일 재선택 시에도 change 이벤트가 발생하도록 초기화
-    if (!file) return;
-    setPhotoError("");
-    setPhotoFile(file);
-    setPhotoPreview(URL.createObjectURL(file));
-  }
-
-  function openCamera() {
-    photoInputRef.current?.click();
-  }
-
-  // 카메라 앱 강제 실행이 지원되지 않는 기기를 위한 폴백: 갤러리(사진 보관함)에서 직접 선택
-  function openGallery() {
-    galleryInputRef.current?.click();
-  }
-
-  async function handlePhotoUpload() {
-    if (!photoFile) return;
-    setPhotoUploading(true);
-    setPhotoError("");
-    try {
-      await uploadFinishPhoto(photoFile);
-      setPhotoFile(null);
-      setPhotoPreview("");
-      onPhotoUploaded?.();
-      // 업로드한 사진을 바로 보여주기 위해 서명된 URL을 다시 조회
-      setRetryCount((n) => n + 1);
-    } catch (err) {
-      setPhotoError(err.message || "사진 업로드 중 오류가 발생했습니다.");
-    } finally {
-      setPhotoUploading(false);
-    }
   }
 
   // 서명된 URL 만료 등으로 이미지 로드가 실패하면, 최초 1회에 한해 새 URL을
@@ -162,62 +131,21 @@ export default function FinishPhotoSection({ onPhotoUploaded }) {
               </>
             ) : (
               /* 촬영/선택 완료 — 미리보기와 저장/재촬영 버튼 노출 */
-              <>
-                <img
-                  src={photoPreview}
-                  alt="완주 사진 미리보기"
-                  className="h-48 w-48 rounded-bubble object-cover shadow-soft"
-                />
-
-                {photoError && <p className="mt-2 text-xs text-red-500">{photoError}</p>}
-
-                <div className="mt-5 flex w-full max-w-xs flex-col gap-3">
-                  <button
-                    type="button"
-                    disabled={photoUploading}
-                    onClick={handlePhotoUpload}
-                    className="w-full rounded-bubble bg-[#05437E] px-5 py-2 text-sm font-bold text-white disabled:opacity-40"
-                  >
-                    {photoUploading ? "업로드 중…" : "사진 저장하기"}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={photoUploading}
-                    onClick={openCamera}
-                    className="w-full rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84] disabled:opacity-40"
-                  >
-                    다시 촬영하기
-                  </button>
-                  <button
-                    type="button"
-                    disabled={photoUploading}
-                    onClick={openGallery}
-                    className="w-full rounded-bubble px-5 py-2 text-sm font-bold text-[#5b6c84] disabled:opacity-40"
-                  >
-                    갤러리에서 선택
-                  </button>
-                </div>
-              </>
+              <FinishPhotoPreviewActions
+                photoPreview={photoPreview}
+                photoUploading={photoUploading}
+                photoError={photoError}
+                saveLabel="사진 저장하기"
+                onSave={uploadPhoto}
+                onRetake={openCamera}
+                onPickGallery={openGallery}
+              />
             )}
 
-            {/* 모바일 전용: capture 속성으로 OS 카메라 앱을 여는 숨겨진 input */}
-            <input
-              ref={photoInputRef}
-              type="file"
-              accept="image/*"
-              capture="environment"
-              className="hidden"
-              onChange={handlePhotoSelect}
-            />
-
-            {/* 카메라 앱 강제 실행이 실패하는 기기를 위한 폴백: capture 속성 없이
-                OS 기본 파일 선택(사진 보관함/갤러리 포함) UI를 여는 숨겨진 input */}
-            <input
-              ref={galleryInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handlePhotoSelect}
+            <FinishPhotoCaptureInputs
+              photoInputRef={photoInputRef}
+              galleryInputRef={galleryInputRef}
+              onSelect={handlePhotoSelect}
             />
           </>
         )}
