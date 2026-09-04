@@ -6,6 +6,7 @@ import ChallengeCompleteModal from "./components/ChallengeCompleteModal";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
+import QrScanCamera from "./components/QrScanCamera";
 import StampCardSection from "./components/StampCardSection";
 import StampScanPage from "./components/StampScanPage";
 import SurveyBanner from "./components/SurveyBanner";
@@ -38,10 +39,31 @@ const URL_BOOTH_ID = isStampPath ? urlParams.get("booth") : null;
 const URL_BOOTH_SIG = isStampPath ? urlParams.get("sig") : null;
 const URL_CHECKPOINT_TYPE = isStampPath ? urlParams.get("type") : null;
 const VALID_CHECKPOINT_TYPES = ["turn", "finish"];
+const CHECKPOINT_TITLES = { turn: "반환점", finish: "완주" };
 const URL_TYPE = VALID_CHECKPOINT_TYPES.includes(URL_CHECKPOINT_TYPE) ? URL_CHECKPOINT_TYPE : null;
 
 if ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) {
   window.history.replaceState({}, "", "/");
+}
+
+/**
+ * 앱 내 카메라로 스캔한 QR 문자열이 유효한 도장/체크포인트 인증 링크(/stamp?...)인지 확인하고,
+ * 부스 인증 또는 반환점/완주 인증에 필요한 정보를 추출합니다. 유효하지 않으면 null을 반환합니다.
+ */
+function parseStampQrText(text) {
+  try {
+    const url = new URL(text, window.location.origin);
+    if (url.pathname !== "/stamp") return null;
+    const params = url.searchParams;
+    const boothId = params.get("booth");
+    const boothSig = params.get("sig");
+    if (boothId && boothSig) return { mode: "booth", boothId, boothSig };
+    const type = params.get("type");
+    if (VALID_CHECKPOINT_TYPES.includes(type)) return { mode: "checkpoint", checkpointType: type };
+    return null;
+  } catch {
+    return null;
+  }
 }
 
 export default function App() {
@@ -58,6 +80,13 @@ export default function App() {
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
   const [showStampScan, setShowStampScan] = useState(Boolean((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE));
+  // 실제 스캔 대상 정보: 최초 진입은 물리 QR을 OS 카메라 앱으로 찍어 이동한 URL 값으로 초기화되고,
+  // 이후에는 앱 내 카메라 스캔(QrScanCamera) 결과로도 갱신됩니다.
+  const [stampBoothId, setStampBoothId] = useState(URL_BOOTH_ID);
+  const [stampBoothSig, setStampBoothSig] = useState(URL_BOOTH_SIG);
+  const [stampCheckpointType, setStampCheckpointType] = useState(URL_TYPE);
+  // 도장판에서 카드를 클릭했을 때 열리는 앱 내 QR 카메라 스캔 오버레이 상태
+  const [cameraScan, setCameraScan] = useState(null); // { title } | null
   const [isTurnCompleted, setIsTurnCompleted] = useState(false);
   const [isFinishCompleted, setIsFinishCompleted] = useState(false);
   const [hasFinishPhoto, setHasFinishPhoto] = useState(false);
@@ -178,6 +207,35 @@ export default function App() {
     setTab("home");
   }
 
+  function openBoothCameraScan(item) {
+    setCameraScan({ title: item.title });
+  }
+
+  function openCheckpointCameraScan(checkpointType) {
+    const label = CHECKPOINT_TITLES[checkpointType] || "체크포인트";
+    setCameraScan({ title: label });
+  }
+
+  // QrScanCamera가 디코딩한 QR 문자열을 검증하고, 유효하면 인증 처리 화면(StampScanPage)을 연다.
+  // 반환값은 QrScanCamera에 유효성 여부를 알려 스캔을 계속할지 판단하는 데 사용된다.
+  function handleCameraScanResult(text) {
+    const parsed = parseStampQrText(text);
+    if (!parsed) return false;
+
+    if (parsed.mode === "booth") {
+      setStampBoothId(parsed.boothId);
+      setStampBoothSig(parsed.boothSig);
+      setStampCheckpointType(null);
+    } else {
+      setStampCheckpointType(parsed.checkpointType);
+      setStampBoothId(null);
+      setStampBoothSig(null);
+    }
+    setCameraScan(null);
+    setShowStampScan(true);
+    return true;
+  }
+
   function handleStampDone({ status, mode, boothId, checkpointType }) {
     if (status === "success" && mode === "checkpoint" && checkpointType) {
       if (checkpointType === "turn") setIsTurnCompleted(true);
@@ -199,6 +257,9 @@ export default function App() {
       });
     }
     setShowStampScan(false);
+    setStampBoothId(null);
+    setStampBoothSig(null);
+    setStampCheckpointType(null);
     window.history.replaceState({}, "", "/");
     // 반환점 미인증 안내 화면 및 캠페인 미참여 안내 화면의 확인 버튼 클릭 시 홈 탭으로 이동
     const isHomeBound = status === "home" || status === "not_participating";
@@ -256,6 +317,8 @@ export default function App() {
                 isTurnCompleted={isTurnCompleted}
                 isFinishCompleted={isFinishCompleted}
                 challengeCompleteStampCount={CHALLENGE_COMPLETE_STAMP_COUNT}
+                onSelectBooth={openBoothCameraScan}
+                onSelectCheckpoint={openCheckpointCameraScan}
               />
             )}
             {tab === "finishPhoto" && authStatus === "ok" && isFinishCompleted && hasFinishPhoto && (
@@ -270,15 +333,23 @@ export default function App() {
             showFinishPhotoTab={isFinishCompleted && hasFinishPhoto}
           />
 
-          {showStampScan && ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) && (
+          {showStampScan && ((stampBoothId && stampBoothSig) || stampCheckpointType) && (
             <StampScanPage
-              mode={URL_TYPE ? "checkpoint" : "booth"}
-              boothId={URL_BOOTH_ID}
-              boothSig={URL_BOOTH_SIG}
-              boothTitle={boothItems.find((b) => b.booth_id === URL_BOOTH_ID)?.title}
-              checkpointType={URL_TYPE}
+              mode={stampCheckpointType ? "checkpoint" : "booth"}
+              boothId={stampBoothId}
+              boothSig={stampBoothSig}
+              boothTitle={boothItems.find((b) => b.booth_id === stampBoothId)?.title}
+              checkpointType={stampCheckpointType}
               authStatus={authStatus}
               onDone={handleStampDone}
+            />
+          )}
+
+          {cameraScan && (
+            <QrScanCamera
+              title={cameraScan.title}
+              onScan={handleCameraScanResult}
+              onClose={() => setCameraScan(null)}
             />
           )}
 
