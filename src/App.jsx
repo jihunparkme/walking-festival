@@ -22,6 +22,8 @@ const STORAGE_KEYS = {
 
 // 챌린지 완료 기준 부스 참여 개수 (전체 부스 개수와 무관하게 최소 5개 참여 시 완료)
 const CHALLENGE_COMPLETE_STAMP_COUNT = 5;
+// 미션 부스가 아니라 경품 수령 여부만 확인하는 전용 도장이므로 챌린지 카운트에서 제외
+const PRIZE_CHECK_BOOTH_ID = "완료확인";
 
 function readJSON(key, fallback) {
   try {
@@ -97,7 +99,8 @@ export default function App() {
   const [challengeCompleteOpen, setChallengeCompleteOpen] = useState(false);
 
   const completedStamps = useMemo(
-    () => boothItems.filter((item) => stamps[item.booth_id]).length,
+    () =>
+      boothItems.filter((item) => item.booth_id !== PRIZE_CHECK_BOOTH_ID && stamps[item.booth_id]).length,
     [boothItems, stamps]
   );
 
@@ -249,7 +252,9 @@ export default function App() {
         const next = { ...prev, [boothId]: true };
         localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
         // 챌린지 완료 기준(CHALLENGE_COMPLETE_STAMP_COUNT) 도달 시점에만 챌린지 완료 팝업 노출
-        const newCompletedCount = boothItems.filter((item) => next[item.booth_id]).length;
+        const newCompletedCount = boothItems.filter(
+          (item) => item.booth_id !== PRIZE_CHECK_BOOTH_ID && next[item.booth_id]
+        ).length;
         if (newCompletedCount === CHALLENGE_COMPLETE_STAMP_COUNT) {
           setChallengeCompleteOpen(true);
         }
