@@ -1,7 +1,7 @@
 import org1 from "../assets/images/org_1.jpeg";
 import org2 from "../assets/images/org_2.jpeg";
 
-export default function HomeSection({ lotteryNumber, participantName, onAdminClick, onLogout, onLoginClick }) {
+export default function HomeSection({ lotteryNumber, participantName, onAdminClick, onLogout, onLoginClick, onReturningLoginClick }) {
 
   return (
     <>
@@ -35,7 +35,14 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
               onClick={onLoginClick}
               className="mt-1 w-full max-w-sm rounded-full bg-[#06539D] py-4 text-lg font-extrabold text-white shadow-soft transition hover:scale-[1.02] hover:bg-[#054A8C] active:scale-95"
             >
-              🏃 걷기 챌린지 참여하기
+              🏃 신규 참여 신청하기
+            </button>
+            <button
+              type="button"
+              onClick={onReturningLoginClick}
+              className="text-sm font-semibold text-[#3a4a5c] underline underline-offset-2 hover:text-[#06539D]"
+            >
+              🔑 이미 참여하셨나요? 로그인하기
             </button>
           </div>
         </section>

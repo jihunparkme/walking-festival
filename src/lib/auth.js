@@ -1,13 +1,14 @@
 /**
- * 등록 또는 로그인 — 서버 API를 호출하고 HttpOnly 쿠키를 발급받습니다.
+ * 신규 참여 등록 또는 기존 참여자 로그인 — 서버 API를 호출하고 HttpOnly 쿠키를 발급받습니다.
  * 클라이언트는 토큰을 직접 다루지 않습니다.
+ * @param {string} mode "register"(신규 참여) | "login"(기존 참여자 로그인)
  * @returns {{ isNew: boolean, lotteryNumber: string }}
  */
-export async function registerOrLogin(name, phone) {
+export async function registerOrLogin(name, phone, mode) {
   const res = await fetch("/api/auth", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, phone }),
+    body: JSON.stringify({ name, phone, mode }),
   });
 
   const json = await res.json().catch(() => ({}));
