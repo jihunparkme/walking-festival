@@ -23,6 +23,21 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           </button>
         </section>
       )}
+      {!participantName && (
+        <section className="soft-card overflow-hidden bg-gradient-to-r from-[#06539D] to-[#3aa0ff] p-5 shadow-soft md:p-7">
+          <p className="text-sm font-semibold text-white/90">
+            걷기캠페인에 참여하고 도장판과 추첨 이벤트를 이용해 보세요.
+          </p>
+          <button
+            type="button"
+            onClick={onLoginClick}
+            className="animate-bob mt-4 w-full rounded-bubble bg-creamSun py-4 text-lg font-extrabold text-[#1a2a3a] shadow-soft transition hover:scale-[1.02] hover:brightness-105 active:scale-100"
+          >
+            🚶 걷기 챌린지 참여하기
+          </button>
+        </section>
+      )}
+
       <section className="soft-card space-y-5 p-4 md:p-7">
         <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
           <div className="min-w-0">
@@ -74,19 +89,6 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           </div>
         </div>
       </section>
-
-      {!participantName && (
-        <section className="soft-card p-4 md:p-7">
-          <p className="text-sm text-[#5b6c84]">걷기캠페인에 참여하고 도장판과 추첨 이벤트를 이용해 보세요.</p>
-          <button
-            type="button"
-            onClick={onLoginClick}
-            className="mt-3 w-full rounded-full bg-[#06539D] py-3 text-sm font-bold text-white transition hover:bg-[#054A8C]"
-          >
-            걷기 챌린지 참여
-          </button>
-        </section>
-      )}
 
       {lotteryNumber && (
         <section className="soft-card p-4 md:p-7">
