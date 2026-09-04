@@ -16,14 +16,25 @@ export default function StampCardSection({
     { key: "finish", title: "완주", subtitle: "완주 인증", done: isFinishCompleted },
   ];
 
+  // booth_id가 "완료확인"인 항목은 미션 부스가 아니라 경품 수령 여부를 확인하기 위한
+  // 전용 도장판이므로, 일반 미션 부스 목록과 분리해서 노출한다.
+  const missionBoothItems = useMemo(
+    () => boothItems.filter((item) => item.booth_id !== "완료확인"),
+    [boothItems]
+  );
+  const prizeCheckBoothItems = useMemo(
+    () => boothItems.filter((item) => item.booth_id === "완료확인"),
+    [boothItems]
+  );
+
   /** 참여가 완료된 부스가 앞쪽에 오도록 정렬 (완료 여부 외 원래 순서는 유지) */
   const sortedBoothItems = useMemo(() => {
-    return [...boothItems].sort((a, b) => {
+    return [...missionBoothItems].sort((a, b) => {
       const doneA = Boolean(stamps[a.booth_id]);
       const doneB = Boolean(stamps[b.booth_id]);
       return doneA === doneB ? 0 : doneA ? -1 : 1;
     });
-  }, [boothItems, stamps]);
+  }, [missionBoothItems, stamps]);
 
   const isChallengeCompleted = completedStamps >= challengeCompleteStampCount;
 
@@ -82,6 +93,44 @@ export default function StampCardSection({
           );
         })}
       </div>
+
+      {prizeCheckBoothItems.length > 0 && (
+        <div className="mt-6 border-t border-[#eef2f8] pt-5">
+          <h3 className="text-sm font-bold text-[#3a4a5c]">🎁 경품 수령 확인</h3>
+          <p className="mt-1 text-xs text-[#8a9ab5]">경품을 수령하면 담당자가 QR 코드로 수령 여부를 확인합니다.</p>
+          <div className="mt-3 grid grid-cols-2 gap-3 md:grid-cols-3">
+            {prizeCheckBoothItems.map((item) => {
+              const done = Boolean(stamps[item.booth_id]);
+              return (
+                <button
+                  key={item.booth_id}
+                  type="button"
+                  disabled={done}
+                  onClick={() => onSelectBooth?.(item)}
+                  className={`relative overflow-hidden rounded-3xl border-2 p-4 text-left ${
+                    done
+                      ? "border-transparent bg-creamSun"
+                      : "border-dashed border-[#e0c98a] bg-white active:bg-[#fdf8ec]"
+                  }`}
+                >
+                  {done && (
+                    <img
+                      src={stampSeal}
+                      alt="경품 수령 완료"
+                      className="pointer-events-none absolute right-1 top-1 h-16 w-16 rotate-12 opacity-90"
+                    />
+                  )}
+                  <p className="text-sm font-bold">{item.title}</p>
+                  <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
+                  <div className={`mt-3 text-xs font-semibold ${done ? "text-[#8a6d1a]" : "text-[#8a9ab5]"}`}>
+                    {done ? "🎁 경품 수령 완료" : "📷 QR 인증하기"}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="mt-6 border-t border-[#eef2f8] pt-5">
         <h3 className="text-sm font-bold text-[#3a4a5c]">걷기 인증</h3>
