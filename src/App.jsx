@@ -64,6 +64,7 @@ export default function App() {
   const [adminPasswordOpen, setAdminPasswordOpen] = useState(false);
   const [showAdmin, setShowAdmin] = useState(false);
   const [loginModalOpen, setLoginModalOpen] = useState(false);
+  const [loginMode, setLoginMode] = useState("register"); // "register"(신규 참여) | "login"(기존 참여자 로그인)
   const [challengeCompleteOpen, setChallengeCompleteOpen] = useState(false);
 
   const completedStamps = useMemo(
@@ -138,7 +139,7 @@ export default function App() {
   }, [tab, authStatus, handleChangeTab]);
 
   async function handleLoginSubmit({ name, phone }) {
-    const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone);
+    const { isNew, lotteryNumber: newLotteryNumber } = await registerOrLogin(name, phone, loginMode);
     setParticipantName(name);
     setLotteryNumber(newLotteryNumber);
     localStorage.setItem(STORAGE_KEYS.name, name);
@@ -147,6 +148,16 @@ export default function App() {
       setAuthStatus("ok");
     }
     return { isNew, lotteryNumber: newLotteryNumber };
+  }
+
+  function openRegisterModal() {
+    setLoginMode("register");
+    setLoginModalOpen(true);
+  }
+
+  function openReturningLoginModal() {
+    setLoginMode("login");
+    setLoginModalOpen(true);
   }
 
   function handleLoginClose() {
@@ -233,7 +244,8 @@ export default function App() {
                 participantName={participantName}
                 onAdminClick={() => setAdminPasswordOpen(true)}
                 onLogout={handleLogout}
-                onLoginClick={() => setLoginModalOpen(true)}
+                onLoginClick={openRegisterModal}
+                onReturningLoginClick={openReturningLoginModal}
               />
             )}
             {tab === "stamp" && authStatus === "ok" && (
@@ -272,6 +284,7 @@ export default function App() {
 
           <LoginModal
             open={loginModalOpen}
+            mode={loginMode}
             onSubmit={handleLoginSubmit}
             onClose={handleLoginClose}
           />

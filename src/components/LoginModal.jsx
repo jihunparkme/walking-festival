@@ -1,9 +1,10 @@
 import { useState } from "react";
 
-// 입력 단계: 이름/전화번호 작성 + 개인정보 동의
-function InputStep({ name, phone, agreed, onChange, onNext }) {
+// 입력 단계: 이름/전화번호 작성 + 개인정보 동의(신규 참여 시에만 필요)
+function InputStep({ mode, name, phone, agreed, onChange, onNext }) {
   const [privacyOpen, setPrivacyOpen] = useState(false);
   const [errors, setErrors] = useState({});
+  const isRegister = mode === "register";
 
   function handlePhoneChange(e) {
     const digits = e.target.value.replace(/\D/g, "").slice(0, 11);
@@ -21,7 +22,7 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
     if (!name.trim()) next.name = "이름을 입력해 주세요.";
     if (!/^01[0-9]{8,9}$/.test(phone.replace(/-/g, "")))
       next.phone = "올바른 전화번호를 입력해 주세요.";
-    if (!agreed) next.agreed = "개인정보 수집 및 이용에 동의해 주세요.";
+    if (isRegister && !agreed) next.agreed = "개인정보 수집 및 이용에 동의해 주세요.";
     return next;
   }
 
@@ -36,9 +37,11 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
 
   return (
     <>
-      <h3 className="text-lg font-extrabold">참여자 정보 입력</h3>
+      <h3 className="text-lg font-extrabold">{isRegister ? "참여자 정보 입력" : "참여자 로그인"}</h3>
       <p className="mt-1 text-sm text-[#5f6f88]">
-        걷기캠페인 참여를 위해 이름과 전화번호를 입력해 주세요.
+        {isRegister
+          ? "걷기캠페인 참여를 위해 이름과 전화번호를 입력해 주세요."
+          : "이미 등록하신 이름과 전화번호를 입력해 주세요."}
       </p>
 
       <div className="mt-4 space-y-3">
@@ -67,42 +70,44 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
           {errors.phone && <p className="mt-1 text-xs text-[#05437E]">{errors.phone}</p>}
         </div>
 
-        {/* 개인정보 동의 */}
-        <div className="rounded-2xl border border-[#c9d5e5] bg-[#f7f9fc] p-3">
-          <p className="text-xs font-semibold text-[#3a4a5c]">개인정보 수집 및 이용 동의 (필수)</p>
-          <p className="mt-1 text-xs leading-relaxed text-[#5f6f88]">
-            수집 항목: 이름, 전화번호 · 수집 목적: 캠페인 참여자 식별 및 추첨 번호 발급
-            · 보유 기간: 행사 종료 후 30일 이내 파기
-          </p>
-          <button
-            type="button"
-            onClick={() => setPrivacyOpen((v) => !v)}
-            className="mt-1 text-xs font-semibold text-[#06539D] underline"
-          >
-            {privacyOpen ? "접기" : "전문 보기"}
-          </button>
-          {privacyOpen && (
-            <p className="mt-2 text-xs leading-relaxed text-[#5f6f88]">
-              본 캠페인은 「개인정보 보호법」 제15조에 따라 참여자의 동의를 받아
-              개인정보를 수집·이용합니다. 수집된 개인정보는 행사 운영 목적
-              이외에 사용되지 않으며, 행사 종료일로부터 30일
-              이내에 안전하게 파기됩니다. 동의를 거부할 권리가 있으나 거부 시
-              캠페인 참여가 제한됩니다.
+        {/* 개인정보 동의 (신규 참여 시에만 노출 — 기존 참여자는 최초 등록 시 이미 동의함) */}
+        {isRegister && (
+          <div className="rounded-2xl border border-[#c9d5e5] bg-[#f7f9fc] p-3">
+            <p className="text-xs font-semibold text-[#3a4a5c]">개인정보 수집 및 이용 동의 (필수)</p>
+            <p className="mt-1 text-xs leading-relaxed text-[#5f6f88]">
+              수집 항목: 이름, 전화번호 · 수집 목적: 캠페인 참여자 식별 및 추첨 번호 발급
+              · 보유 기간: 행사 종료 후 30일 이내 파기
             </p>
-          )}
-          <label className="mt-2 flex cursor-pointer items-center gap-2">
-            <input
-              type="checkbox"
-              checked={agreed}
-              onChange={(e) => onChange("agreed", e.target.checked)}
-              className="h-4 w-4 accent-[#06539D]"
-            />
-            <span className="text-xs font-semibold text-[#3a4a5c]">
-              개인정보 수집 및 이용에 동의합니다.
-            </span>
-          </label>
-          {errors.agreed && <p className="mt-1 text-xs text-[#05437E]">{errors.agreed}</p>}
-        </div>
+            <button
+              type="button"
+              onClick={() => setPrivacyOpen((v) => !v)}
+              className="mt-1 text-xs font-semibold text-[#06539D] underline"
+            >
+              {privacyOpen ? "접기" : "전문 보기"}
+            </button>
+            {privacyOpen && (
+              <p className="mt-2 text-xs leading-relaxed text-[#5f6f88]">
+                본 캠페인은 「개인정보 보호법」 제15조에 따라 참여자의 동의를 받아
+                개인정보를 수집·이용합니다. 수집된 개인정보는 행사 운영 목적
+                이외에 사용되지 않으며, 행사 종료일로부터 30일
+                이내에 안전하게 파기됩니다. 동의를 거부할 권리가 있으나 거부 시
+                캠페인 참여가 제한됩니다.
+              </p>
+            )}
+            <label className="mt-2 flex cursor-pointer items-center gap-2">
+              <input
+                type="checkbox"
+                checked={agreed}
+                onChange={(e) => onChange("agreed", e.target.checked)}
+                className="h-4 w-4 accent-[#06539D]"
+              />
+              <span className="text-xs font-semibold text-[#3a4a5c]">
+                개인정보 수집 및 이용에 동의합니다.
+              </span>
+            </label>
+            {errors.agreed && <p className="mt-1 text-xs text-[#05437E]">{errors.agreed}</p>}
+          </div>
+        )}
       </div>
 
       <button
@@ -117,10 +122,11 @@ function InputStep({ name, phone, agreed, onChange, onNext }) {
 }
 
 // 재확인 단계: 입력 정보 확인 후 최종 제출
-function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
+function ConfirmStep({ mode, name, phone, loading, error, onConfirm, onBack }) {
+  const isRegister = mode === "register";
   return (
     <>
-      <h3 className="text-lg font-extrabold">입력 정보 확인</h3>
+      <h3 className="text-lg font-extrabold">{isRegister ? "입력 정보 확인" : "로그인 정보 확인"}</h3>
       <p className="mt-1 text-sm text-[#5f6f88]">
         아래 정보가 맞는지 다시 한번 확인해 주세요.
       </p>
@@ -155,7 +161,7 @@ function ConfirmStep({ name, phone, loading, error, onConfirm, onBack }) {
           disabled={loading}
           className="flex-1 rounded-full bg-[#06539D] py-2.5 text-sm font-bold text-white disabled:opacity-60"
         >
-          {loading ? "처리 중…" : "참여 시작하기"}
+          {loading ? "처리 중…" : isRegister ? "참여 시작하기" : "로그인하기"}
         </button>
       </div>
     </>
@@ -189,7 +195,7 @@ function DoneStep({ lotteryNumber, onClose }) {
   );
 }
 
-export default function LoginModal({ open, onSubmit, onClose }) {
+export default function LoginModal({ open, mode = "register", onSubmit, onClose }) {
   const [step, setStep] = useState("input"); // "input" | "confirm" | "done"
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
@@ -258,6 +264,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
         <div className="rounded-3xl bg-white p-6 shadow-soft">
           {step === "input" ? (
             <InputStep
+              mode={mode}
               name={name}
               phone={phone}
               agreed={agreed}
@@ -266,6 +273,7 @@ export default function LoginModal({ open, onSubmit, onClose }) {
             />
           ) : step === "confirm" ? (
             <ConfirmStep
+              mode={mode}
               name={name.trim()}
               phone={phone.trim()}
               loading={loading}
