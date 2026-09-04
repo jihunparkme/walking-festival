@@ -23,6 +23,24 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           </button>
         </section>
       )}
+      {!participantName && (
+        <section className="soft-card overflow-hidden bg-gradient-to-br from-skyMint via-limeCloud to-creamSun p-5 md:p-7">
+          <div className="flex flex-col items-center gap-3 text-center">
+            <span className="text-4xl animate-bob">🚶‍♀️</span>
+            <p className="text-base font-bold text-[#1a2a3a] md:text-lg">
+              지금 바로 걷기캠페인에 참여하고<br className="md:hidden" /> 도장판과 추첨 이벤트를 만나보세요!
+            </p>
+            <button
+              type="button"
+              onClick={onLoginClick}
+              className="mt-1 w-full max-w-sm rounded-full bg-[#06539D] py-4 text-lg font-extrabold text-white shadow-soft transition hover:scale-[1.02] hover:bg-[#054A8C] active:scale-95"
+            >
+              🏃 걷기 챌린지 참여하기
+            </button>
+          </div>
+        </section>
+      )}
+
       <section className="soft-card space-y-5 p-4 md:p-7">
         <div className="grid gap-4 md:grid-cols-[1.2fr_1fr]">
           <div className="min-w-0">
@@ -74,19 +92,6 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
           </div>
         </div>
       </section>
-
-      {!participantName && (
-        <section className="soft-card p-4 md:p-7">
-          <p className="text-sm text-[#5b6c84]">걷기캠페인에 참여하고 도장판과 추첨 이벤트를 이용해 보세요.</p>
-          <button
-            type="button"
-            onClick={onLoginClick}
-            className="mt-3 w-full rounded-full bg-[#06539D] py-3 text-sm font-bold text-white transition hover:bg-[#054A8C]"
-          >
-            걷기 챌린지 참여
-          </button>
-        </section>
-      )}
 
       {lotteryNumber && (
         <section className="soft-card p-4 md:p-7">
