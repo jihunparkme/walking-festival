@@ -104,10 +104,7 @@ export default function StampScanPage({
             return;
           }
           setStatus(STATUS.SUCCESS);
-          // 반환점 인증은 설문조사 참여를 유도하기 위해 자동 이동 대신 확인 버튼을 노출한다.
-          if (!(isCheckpoint && checkpointType === "turn")) {
-            setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
-          }
+          setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
         } else if (res.status === 409) {
           const data = await res.json().catch(() => ({}));
           // 완주 인증은 이미 완료됐지만 사진이 아직 등록되지 않은 경우
@@ -175,9 +172,8 @@ export default function StampScanPage({
     setPhotoError("");
     try {
       await uploadFinishPhoto(photoFile);
-      // 저장 완료 알림을 잠시 보여준 뒤 완료 콜백으로 전환
+      // 설문조사 참여를 유도하기 위해 자동 이동 대신 확인 버튼을 노출한다.
       setStatus(STATUS.PHOTO_SAVED);
-      setTimeout(() => onDone({ status: "success", mode, checkpointType }), 2000);
     } catch (err) {
       setPhotoError(err.message || "사진 업로드 중 오류가 발생했습니다.");
     } finally {
@@ -223,23 +219,7 @@ export default function StampScanPage({
             )}
           </p>
 
-          {isCheckpoint && checkpointType === "turn" ? (
-            <>
-              <SurveyBanner
-                className="mt-5 w-full max-w-xs shadow-soft"
-                message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
-              />
-              <button
-                type="button"
-                onClick={() => onDone({ status: "success", mode, boothId, checkpointType })}
-                className="mt-3 w-full max-w-xs rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
-              >
-                확인
-              </button>
-            </>
-          ) : (
-            <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
-          )}
+          <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
         </>
       )}
 
@@ -334,7 +314,18 @@ export default function StampScanPage({
           <div className="mb-4 animate-bounce text-6xl">✅</div>
           <h2 className="text-2xl font-extrabold text-[#05437E]">저장이 완료되었습니다!</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">완주 인증 사진이 정상적으로 저장되었습니다.</p>
-          <p className="mt-5 text-xs text-[#8a9ab5]">잠시 후 도장판으로 이동합니다…</p>
+
+          <SurveyBanner
+            className="mt-5 w-full max-w-xs shadow-soft"
+            message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
+          />
+          <button
+            type="button"
+            onClick={() => onDone({ status: "success", mode, checkpointType })}
+            className="mt-3 w-full max-w-xs rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
+          >
+            확인
+          </button>
         </>
       )}
 
