@@ -124,14 +124,12 @@ export default defineConfig(({ mode }) => {
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const trimmedName = name.trim(), trimmedPhone = phone.trim();
 
+            // 이름 + 전화번호 조합으로 중복 판단 (보호자가 같은 번호로 여러 자녀를
+            // 등록하는 경우를 허용하기 위해 전화번호만으로는 판단하지 않는다)
             const { data: existing } = await supabase
-              .from("participants").select("id, name, token").eq("phone", trimmedPhone).maybeSingle();
+              .from("participants").select("id, name, token").eq("phone", trimmedPhone).eq("name", trimmedName).maybeSingle();
 
             if (existing) {
-              if (existing.name !== trimmedName) {
-                res.statusCode = 400;
-                res.end(JSON.stringify({ error: "입력하신 이름이 기존 등록 정보와 일치하지 않습니다." })); return;
-              }
               // 로컬 개발: Secure 플래그 제외 (HTTP)
               res.setHeader("Set-Cookie", buildSetCookie(existing.token, { secure: false }));
               res.statusCode = 200;
@@ -142,6 +140,10 @@ export default defineConfig(({ mode }) => {
             const { data: inserted, error: insertError } = await supabase
               .from("participants").insert({ name: trimmedName, phone: trimmedPhone }).select("id, token").single();
             if (insertError) {
+              if (insertError.code === "23505") {
+                res.statusCode = 400;
+                res.end(JSON.stringify({ error: "이미 동일한 이름과 전화번호로 등록되어 있습니다." })); return;
+              }
               res.statusCode = 500; res.end(JSON.stringify({ error: "참여자 등록 중 오류가 발생했습니다." })); return;
             }
             // 로컬 개발: Secure 플래그 제외 (HTTP)
