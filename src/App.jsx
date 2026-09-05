@@ -14,8 +14,12 @@ import { fetchMe, logout, registerOrLogin } from "./lib/auth";
 import { fetchBooths } from "./lib/booths";
 import { fetchMyStamps } from "./lib/stamps";
 
+// 새로고침 순간 화면 깜빡임을 줄이기 위한 초기값 전용 캐시.
+// 추첨번호/이름은 등록 시점에 정해지면 서버에서 수정/삭제할 수단이 없어(참여자 관리 API는
+// 조회(GET)만 지원) 캐시가 서버 값과 어긋날 일이 없다. 다만 이 값은 "초기 표시값"으로만
+// 쓰이며, fetchMe() 응답이 도착하면 항상 그 값으로 덮어써 서버가 최종 권위를 갖는다.
+// (반면 stamps는 관리자가 부스를 삭제하면 서버 값이 바뀔 수 있어 캐싱하지 않는다.)
 const STORAGE_KEYS = {
-  stamps: "walkingFestival.stamps",
   lotteryNumber: "walkingFestival.lotteryNumber",
   name: "walkingFestival.name",
 };
@@ -25,13 +29,14 @@ const CHALLENGE_COMPLETE_STAMP_COUNT = 5;
 // 미션 부스가 아니라 경품 수령 여부만 확인하는 전용 도장이므로 챌린지 카운트에서 제외
 const PRIZE_CHECK_BOOTH_ID = "완료확인";
 
-function readJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? JSON.parse(raw) : fallback;
-  } catch {
-    return fallback;
-  }
+/**
+ * 경품 수령 확인 도장(PRIZE_CHECK_BOOTH_ID)을 제외하고, 실제 챌린지 카운트에 반영되는
+ * 완료 도장 개수를 계산합니다.
+ */
+function countCompletedStamps(boothItems, stampsObj) {
+  return boothItems.filter(
+    (item) => item.booth_id !== PRIZE_CHECK_BOOTH_ID && stampsObj[item.booth_id]
+  ).length;
 }
 
 // /stamp?booth=xxx&sig=yyy (부스 QR, booth_id + 서버 서명) 또는 /stamp?type=turn|finish URL인지 감지 (컴포넌트 바깥에서 한 번만 읽음)
@@ -73,11 +78,15 @@ export default function App() {
     const hash = window.location.hash.replace("#", "");
     return hash === "stamp" || hash === "finishPhoto" ? hash : "home";
   });
-  const [stamps, setStamps] = useState(() => readJSON(STORAGE_KEYS.stamps, {}));
+  // 도장은 로컬 캐시(localStorage) 없이 항상 서버(fetchMe, fetchMyStamps)를
+  // 단일 진실 공급원(source of truth)으로 사용한다. 로그인 세션 확인 전까지는 빈 값으로 시작한다.
+  const [stamps, setStamps] = useState({});
   const [boothItems, setBoothItems] = useState([]);
 
   // 세션: 서버에서 확인, 로딩 중에는 undefined
   const [authStatus, setAuthStatus] = useState("loading"); // "loading" | "ok" | "none"
+  // 추첨번호/이름은 새로고침 시 깜빡임 방지용 초기값으로만 로컬 캐시를 읽고,
+  // fetchMe() 응답이 도착하면 아래 useEffect에서 서버 값으로 덮어쓴다.
   const [lotteryNumber, setLotteryNumber] = useState(() => localStorage.getItem(STORAGE_KEYS.lotteryNumber) || "");
   const [participantName, setParticipantName] = useState(() => localStorage.getItem(STORAGE_KEYS.name) || "");
 
@@ -99,8 +108,7 @@ export default function App() {
   const [challengeCompleteOpen, setChallengeCompleteOpen] = useState(false);
 
   const completedStamps = useMemo(
-    () =>
-      boothItems.filter((item) => item.booth_id !== PRIZE_CHECK_BOOTH_ID && stamps[item.booth_id]).length,
+    () => countCompletedStamps(boothItems, stamps),
     [boothItems, stamps]
   );
 
@@ -119,19 +127,19 @@ export default function App() {
     fetchMe()
       .then((me) => {
         if (me) {
+          // 캐시된 초기값이 있었더라도 서버 응답이 항상 최종 권위를 갖도록 덮어쓴다.
           setParticipantName(me.name);
           setLotteryNumber(me.lotteryNumber);
+          localStorage.setItem(STORAGE_KEYS.name, me.name);
+          localStorage.setItem(STORAGE_KEYS.lotteryNumber, me.lotteryNumber);
           setIsTurnCompleted(Boolean(me.isTurnCompleted));
           setIsFinishCompleted(Boolean(me.isFinishCompleted));
           setHasFinishPhoto(Boolean(me.hasFinishPhoto));
-          localStorage.setItem(STORAGE_KEYS.name, me.name);
-          localStorage.setItem(STORAGE_KEYS.lotteryNumber, me.lotteryNumber);
           setAuthStatus("ok");
         } else {
-          // 쿠키 세션 없음 — localStorage 캐시도 초기화
+          // 쿠키 세션 없음 — 서버 기준 상태로 초기화하고 캐시도 함께 제거
           localStorage.removeItem(STORAGE_KEYS.name);
           localStorage.removeItem(STORAGE_KEYS.lotteryNumber);
-          localStorage.removeItem(STORAGE_KEYS.stamps);
           setParticipantName("");
           setLotteryNumber("");
           setStamps({});
@@ -147,7 +155,6 @@ export default function App() {
     fetchMyStamps()
       .then((serverStamps) => {
         setStamps(serverStamps);
-        localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(serverStamps));
       })
       .catch(console.error);
   }, [authStatus]);
@@ -202,7 +209,6 @@ export default function App() {
     await logout();
     localStorage.removeItem(STORAGE_KEYS.name);
     localStorage.removeItem(STORAGE_KEYS.lotteryNumber);
-    localStorage.removeItem(STORAGE_KEYS.stamps);
     setParticipantName("");
     setLotteryNumber("");
     setStamps({});
@@ -248,14 +254,19 @@ export default function App() {
       }
     } else if (status === "success" && boothId) {
       setStamps((prev) => {
-        if (prev[boothId]) return prev; // 이미 인증된 부스면 카운트 중복 방지
+        // 서버(api/stamp.js)는 이미 도장이 있으면 409(duplicate)로 응답하고, status가
+        // "success"로 전달되는 경우는 서버 기준으로 항상 신규 적립이다. 따라서 로컬
+        // prev[boothId] 값으로 중복 여부를 재판단하지 않는다 — 로컬 캐시에 의존하면
+        // 관리자가 부스를 삭제해 서버의 stamp_records가 초기화된 뒤 재시도로 신규 적립에
+        // 성공해도 캐시 값 때문에 카운트 증가와 챌린지 완료 팝업 노출이 무시되는 문제가 있었다.
         const next = { ...prev, [boothId]: true };
-        localStorage.setItem(STORAGE_KEYS.stamps, JSON.stringify(next));
-        // 챌린지 완료 기준(CHALLENGE_COMPLETE_STAMP_COUNT) 도달 시점에만 챌린지 완료 팝업 노출
-        const newCompletedCount = boothItems.filter(
-          (item) => item.booth_id !== PRIZE_CHECK_BOOTH_ID && next[item.booth_id]
-        ).length;
-        if (newCompletedCount === CHALLENGE_COMPLETE_STAMP_COUNT) {
+        // 챌린지 완료 기준(CHALLENGE_COMPLETE_STAMP_COUNT) 도달 "시점"에 챌린지 완료 팝업 노출.
+        // 카운트가 정확히 기준값과 일치할 때만 열면, 동기화 등으로 카운트가 기준값을
+        // 건너뛰고 증가하는 경우(예: 4 -> 6) 팝업이 영영 노출되지 않으므로,
+        // 기준값 미만 -> 이상으로 "전환"되는 시점을 감지해 노출한다.
+        const prevCompletedCount = countCompletedStamps(boothItems, prev);
+        const newCompletedCount = countCompletedStamps(boothItems, next);
+        if (prevCompletedCount < CHALLENGE_COMPLETE_STAMP_COUNT && newCompletedCount >= CHALLENGE_COMPLETE_STAMP_COUNT) {
           setChallengeCompleteOpen(true);
         }
         return next;
@@ -269,12 +280,6 @@ export default function App() {
     // 반환점 미인증 안내 화면 및 캠페인 미참여 안내 화면의 확인 버튼 클릭 시 홈 탭으로 이동
     const isHomeBound = status === "home" || status === "not_participating";
     handleChangeTab(isHomeBound ? "home" : "stamp");
-    if (status === "not_participating") {
-      // 홈 탭 렌더링(참여 버튼 등) 이후 화면 가장 아래 영역으로 스크롤 이동
-      setTimeout(() => {
-        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
-      }, 100);
-    }
   }
 
   return (
