@@ -36,7 +36,10 @@ export default function StampCardSection({
     });
   }, [missionBoothItems, stamps]);
 
-  const isChallengeCompleted = completedStamps >= challengeCompleteStampCount;
+  // 경품 수령 확인("완료확인" 부스)까지 완료된 경우, 이미 상품을 받아간 것이므로
+  // "챌린지 완료" 안내는 더 이상 노출하지 않는다.
+  const isPrizeReceived = prizeCheckBoothItems.some((item) => Boolean(stamps[item.booth_id]));
+  const isChallengeCompleted = completedStamps >= challengeCompleteStampCount && !isPrizeReceived;
 
   return (
     <section className="soft-card p-4 md:p-7">
