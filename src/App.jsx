@@ -306,13 +306,14 @@ export default function App() {
               <p className="text-sm font-semibold tracking-wide text-[#61718a]">세계자살예방의 날 · 9월 13일</p>
               <h1 className="mt-1 text-2xl font-extrabold md:text-3xl">사람사랑 생명사랑 걷기캠페인</h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-[#4e5f75] md:text-base">
-                따뜻한 걸음으로 생명의 소중함을 전하는 참여형 축제입니다. 부스 미션과 걷기 인증을 완료하고,
+                따뜻한 걸음으로 생명의 소중함을 전하는 참여형 캠페인입니다. 부스 미션과 걷기 인증을 완료하고,
                 희망의 메시지를 함께 나눠 보세요.
               </p>
 
               <SurveyBanner
                 className="mt-4"
-                message={<>📝 캠페인 설문조사에 참여하고<br/>소중한 의견을 들려주세요!</>}
+                message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
+                note="*참여후 7번 만족도조사 부스에서 완료 화면을 보여주시면 소정의 상품을 드립니다."
               />
             </div>
           </header>

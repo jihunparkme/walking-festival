@@ -181,7 +181,7 @@ function DoneStep({ lotteryNumber, onClose }) {
         <div className="mt-4 w-full rounded-2xl bg-[#eff6ff] px-4 py-3">
           <p className="text-xs font-semibold text-[#5f6f88]">나의 추첨번호</p>
           <p className="mt-1 text-2xl font-extrabold tracking-widest text-[#06539D]">{lotteryNumber}</p>
-          <p className="mt-1 text-xs text-[#8a9ab5]">축제 소개 페이지에서 확인하실 수 있습니다.</p>
+          <p className="mt-1 text-xs text-[#8a9ab5]">캠페인 소개 페이지에서 확인하실 수 있습니다.</p>
         </div>
       )}
       <button

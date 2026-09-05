@@ -80,20 +80,30 @@ export default function HomeSection({ lotteryNumber, participantName, onAdminCli
             <div className="rounded-bubble bg-skyMint p-4">
             <p className="text-sm font-semibold text-[#546378]">🤝 협력기관</p>
             <div className="mt-3 space-y-3">
-              <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
+              <a
+                href="https://whb.or.kr/77"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl bg-white/90 p-3 transition hover:bg-white"
+              >
                 <img src={org1} alt="안양월드휴먼브리지" className="h-10 w-10 animate-bob rounded-full object-cover" />
                 <div>
                   <p className="text-sm font-bold">안양월드휴먼브리지</p>
                   <p className="text-xs text-[#60718a]">생명사랑 네트워크 파트너</p>
                 </div>
-              </div>
-              <div className="flex items-center gap-3 rounded-2xl bg-white/90 p-3">
+              </a>
+              <a
+                href="https://www.yulmok.net"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-3 rounded-2xl bg-white/90 p-3 transition hover:bg-white"
+              >
                 <img src={org2} alt="율목종합사회복지관" className="h-10 w-10 animate-bob rounded-full object-cover" />
                 <div>
                   <p className="text-sm font-bold">율목종합사회복지관</p>
                   <p className="text-xs text-[#60718a]">지역사회 연계 협력기관</p>
                 </div>
-              </div>
+              </a>
             </div>
             </div>
           </div>

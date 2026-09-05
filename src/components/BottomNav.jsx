@@ -1,5 +1,5 @@
 const tabs = [
-  { id: "home", label: "축제 소개" },
+  { id: "home", label: "캠페인 소개" },
   { id: "stamp", label: "도장판" },
   { id: "finishPhoto", label: "완주 사진" },
 ];
