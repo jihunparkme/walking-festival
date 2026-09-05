@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import AdminPage from "./components/AdminPage";
 import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
@@ -82,6 +82,11 @@ export default function App() {
   // 단일 진실 공급원(source of truth)으로 사용한다. 로그인 세션 확인 전까지는 빈 값으로 시작한다.
   const [stamps, setStamps] = useState({});
   const [boothItems, setBoothItems] = useState([]);
+  // handleStampDone은 실물 QR 스캔(카메라 앱)으로 진입한 StampScanPage의 useEffect(의존성
+  // 배열에 onDone 미포함)에서 한 번 캡처된 뒤 재사용될 수 있어, 그 시점의 boothItems가
+  // 아직 빈 배열(fetchBooths 응답 전)이면 챌린지 완료 카운트가 항상 0으로 계산되어 팝업이
+  // 영영 노출되지 않는 문제가 있었다. ref로 최신 boothItems를 항상 읽도록 해 이를 방지한다.
+  const boothItemsRef = useRef(boothItems);
 
   // 세션: 서버에서 확인, 로딩 중에는 undefined
   const [authStatus, setAuthStatus] = useState("loading"); // "loading" | "ok" | "none"
@@ -121,6 +126,10 @@ export default function App() {
   useEffect(() => {
     fetchBooths().then(setBoothItems).catch(console.error);
   }, []);
+
+  useEffect(() => {
+    boothItemsRef.current = boothItems;
+  }, [boothItems]);
 
   // 앱 시작 시 HttpOnly 쿠키로 세션 확인
   useEffect(() => {
@@ -264,8 +273,8 @@ export default function App() {
         // 카운트가 정확히 기준값과 일치할 때만 열면, 동기화 등으로 카운트가 기준값을
         // 건너뛰고 증가하는 경우(예: 4 -> 6) 팝업이 영영 노출되지 않으므로,
         // 기준값 미만 -> 이상으로 "전환"되는 시점을 감지해 노출한다.
-        const prevCompletedCount = countCompletedStamps(boothItems, prev);
-        const newCompletedCount = countCompletedStamps(boothItems, next);
+        const prevCompletedCount = countCompletedStamps(boothItemsRef.current, prev);
+        const newCompletedCount = countCompletedStamps(boothItemsRef.current, next);
         if (prevCompletedCount < CHALLENGE_COMPLETE_STAMP_COUNT && newCompletedCount >= CHALLENGE_COMPLETE_STAMP_COUNT) {
           setChallengeCompleteOpen(true);
         }
