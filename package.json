@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "test": "vitest run",
-    "build": "vitest run && vite build",
+    "build": "vite build",
+    "build:ci": "vitest run && vite build",
     "preview": "vite preview"
   },
   "dependencies": {
