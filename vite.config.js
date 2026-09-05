@@ -4,12 +4,26 @@ import { defineConfig, loadEnv } from "vite";
 import { validateStampRequest } from "./api/_lib/qrSign.js";
 import { mapBoothsWithStats, toCountMap } from "./api/_lib/boothStats.js";
 import { parseCookieToken, buildSetCookie, buildClearCookie } from "./api/_lib/auth.js";
+import { checkRateLimit } from "./api/_lib/rateLimit.js";
 
 /**
  * 요청 쿠키에 토큰이 존재하는지만 우선 검사한다 (로컬 개발용 Node 스타일 res).
  * 없으면 401 응답을 직접 보내고 null을 반환한다. 반환된 token은 이후
  * fetchParticipantByTokenLocal에 그대로 넘겨 재사용하면 되므로 쿠키를 두 번 파싱할 필요가 없다.
  */
+/**
+ * rate limit 초과 시 429 응답을 직접 보내고 true를 반환한다 (로컬 개발용 Node 스타일 res).
+ * api/_lib/rateLimit.js의 checkRateLimit(순수 검사 함수)을 재사용해 프로덕션과 동일한 로직을 유지한다.
+ */
+function isRateLimitedLocal(req, res, routeName, token, options) {
+  if (!checkRateLimit(req, routeName, token, options)) return false;
+  const windowMs = options?.windowMs ?? 10_000;
+  res.setHeader("Retry-After", String(Math.ceil(windowMs / 1000)));
+  res.statusCode = 429;
+  res.end(JSON.stringify({ error: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요." }));
+  return true;
+}
+
 function assertTokenPresentLocal(req, res) {
   const token = parseCookieToken(req.headers.cookie);
   if (!token) {
@@ -124,6 +138,9 @@ export default defineConfig(({ mode }) => {
             if (mode !== "register" && mode !== "login") {
               res.statusCode = 400; res.end(JSON.stringify({ error: "잘못된 요청입니다." })); return;
             }
+            // 아직 세션 토큰이 없는 단계이므로 IP 기준으로 등록/로그인 시도 폭주 방지
+            if (isRateLimitedLocal(req, res, "auth", null, { windowMs: 60_000, maxRequests: 10 })) return;
+
             const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
             const trimmedName = name.trim(), trimmedPhone = phone.trim();
 
@@ -288,10 +305,21 @@ export default defineConfig(({ mode }) => {
               res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
             }
 
-            const { error: updateError } = await supabase
-              .from("participants").update({ [field]: true }).eq("id", participant.id);
+            // 조회 이후 동시 중복 요청이 함께 통과하는 것을 막기 위해
+            // field가 아직 false인 행에 한해서만 UPDATE가 적용되도록 조건을 건다(원자적 체크 앤 셋).
+            const { data: updated, error: updateError } = await supabase
+              .from("participants")
+              .update({ [field]: true })
+              .eq("id", participant.id)
+              .eq(field, false)
+              .select("id")
+              .maybeSingle();
             if (updateError) {
               res.statusCode = 500; res.end(JSON.stringify({ error: "인증 저장 중 오류가 발생했습니다." })); return;
+            }
+            // 앞선 조회 이후 동시 요청이 먼저 UPDATE를 적용해 이미 field가 true가 된 경우
+            if (!updated) {
+              res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
             }
             res.statusCode = 200;
             res.end(JSON.stringify({ success: true, type }));
@@ -379,6 +407,8 @@ export default defineConfig(({ mode }) => {
               return;
             }
             const { password } = await readBody(req);
+            // 비밀번호 대입 공격 방지 (IP 기준 1분에 5회)
+            if (isRateLimitedLocal(req, res, "admin-auth", null, { windowMs: 60_000, maxRequests: 5 })) return;
             if (!env.ADMIN_PASSWORD) {
               res.statusCode = 500;
               res.end(JSON.stringify({ error: "관리자 비밀번호가 설정되지 않았습니다." }));

@@ -60,14 +60,24 @@ export default withSentry(async function handler(req, res) {
     return res.status(409).json({ error: "이미 인증이 완료되었습니다.", type });
   }
 
-  const { error: updateError } = await supabase
+  // 조회 이후 동시 중복 요청(더블탭, 네트워크 재시도 등)이 함께 통과하는 것을 막기 위해
+  // field가 아직 false인 행에 한해서만 UPDATE가 적용되도록 조건을 건다(원자적 체크 앤 셋).
+  const { data: updated, error: updateError } = await supabase
     .from("participants")
     .update({ [field]: true })
-    .eq("id", participant.id);
+    .eq("id", participant.id)
+    .eq(field, false)
+    .select("id")
+    .maybeSingle();
 
   if (updateError) {
     console.error("checkpoint update error:", updateError);
     return res.status(500).json({ error: "인증 저장 중 오류가 발생했습니다." });
+  }
+
+  // 앞선 조회 이후 동시 요청이 먼저 UPDATE를 적용해 이미 field가 true가 된 경우
+  if (!updated) {
+    return res.status(409).json({ error: "이미 인증이 완료되었습니다.", type });
   }
 
   return res.status(200).json({ success: true, type });
