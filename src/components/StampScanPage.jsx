@@ -318,6 +318,7 @@ export default function StampScanPage({
           <SurveyBanner
             className="mt-5 w-full max-w-xs shadow-soft"
             message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
+            note="*참여후 7번 만족도조사 부스에서 완료 화면을 보여주시면 소정의 상품을 드립니다."
           />
           <button
             type="button"
