@@ -1,9 +1,13 @@
 import { withSentry } from "../_lib/sentry.js";
+import { isRateLimited } from "../_lib/rateLimit.js";
 
 export default withSentry(function handler(req, res) {
   if (req.method !== "POST") {
     return res.status(405).json({ error: "Method not allowed" });
   }
+
+  // 비밀번호 대입 공격 방지 (IP 기준 1분에 5회)
+  if (isRateLimited(req, res, "admin-auth", null, { windowMs: 60_000, maxRequests: 5 })) return;
 
   const { password } = req.body ?? {};
   const adminPassword = process.env.ADMIN_PASSWORD;

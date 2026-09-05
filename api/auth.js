@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import { withSentry, identifyUser } from "./_lib/sentry.js";
 import { buildSetCookie } from "./_lib/auth.js";
+import { isRateLimited } from "./_lib/rateLimit.js";
 
 const supabase = createClient(
   process.env.SUPABASE_URL,
@@ -19,6 +20,9 @@ export default withSentry(async function handler(req, res) {
   if (mode !== "register" && mode !== "login") {
     return res.status(400).json({ error: "잘못된 요청입니다." });
   }
+
+  // 아직 세션 토큰이 없는 단계이므로 IP 기준으로 등록/로그인 시도 폭주(전화번호 대입 등) 방지
+  if (isRateLimited(req, res, "auth", null, { windowMs: 60_000, maxRequests: 10 })) return;
 
   const trimmedName = name.trim();
   const trimmedPhone = phone.trim();
