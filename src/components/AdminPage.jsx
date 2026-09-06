@@ -3,6 +3,8 @@ import {
   createAdminBooth,
   deleteAdminBooth,
   fetchAdminBooths,
+  fetchAdminFinisherPhotoUrl,
+  fetchAdminFinishers,
   fetchAdminParticipants,
   updateAdminBooth,
 } from "../lib/admin";
@@ -163,6 +165,232 @@ function ParticipantsTab() {
             다음
           </button>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ─── 완주자 탭 ──────────────────────────────────────────────────────────────
+
+function FinisherPhotoModal({ finisher, onClose }) {
+  const [status, setStatus] = useState("loading"); // "loading" | "ready" | "error"
+  const [photoUrl, setPhotoUrl] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+
+  useEffect(() => {
+    let cancelled = false;
+    setStatus("loading");
+    fetchAdminFinisherPhotoUrl(finisher.id)
+      .then((url) => {
+        if (cancelled) return;
+        setPhotoUrl(url);
+        setStatus("ready");
+      })
+      .catch((err) => {
+        if (cancelled) return;
+        setErrorMsg(err.message);
+        setStatus("error");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [finisher.id]);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+      <div
+        className="w-full max-w-sm rounded-3xl bg-white p-5 shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between">
+          <h4 className="text-base font-extrabold text-[#1a2a3a]">
+            {finisher.name}님의 완주 인증 사진
+          </h4>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-full bg-[#eef2f8] px-3 py-1 text-xs font-bold text-[#3a4a5c]"
+          >
+            닫기
+          </button>
+        </div>
+        <div className="mt-4 flex items-center justify-center">
+          {status === "loading" && (
+            <p className="py-10 text-sm text-[#8a9ab5]">불러오는 중…</p>
+          )}
+          {status === "error" && (
+            <p className="py-10 text-sm text-red-500">{errorMsg}</p>
+          )}
+          {status === "ready" && (
+            <img
+              src={photoUrl}
+              alt={`${finisher.name}님의 완주 인증 사진`}
+              className="max-h-[24rem] w-full rounded-2xl object-cover"
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FinishersTab() {
+  const [rows, setRows] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [searchInput, setSearchInput] = useState("");
+  const [search, setSearch] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [viewingFinisher, setViewingFinisher] = useState(null);
+  const PAGE_SIZE = 20;
+  const debounceRef = useRef(null);
+
+  async function load(searchVal, pageVal) {
+    setLoading(true);
+    setError("");
+    try {
+      const res = await fetchAdminFinishers({ search: searchVal, page: pageVal });
+      setRows(res.data ?? []);
+      setTotal(res.count ?? 0);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  // 타이핑 시 300ms 디바운스 후 검색
+  function handleInputChange(e) {
+    const val = e.target.value;
+    setSearchInput(val);
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      setPage(1);
+      setSearch(val);
+    }, 300);
+  }
+
+  useEffect(() => {
+    load(search, page);
+  }, [search, page]);
+
+  function handleReset() {
+    clearTimeout(debounceRef.current);
+    setSearchInput("");
+    setPage(1);
+    setSearch("");
+  }
+
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+
+  return (
+    <div className="space-y-4">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={searchInput}
+          onChange={handleInputChange}
+          placeholder="이름 또는 전화번호 검색"
+          className="flex-1 rounded-2xl border border-[#c9d5e5] px-3 py-2 text-sm outline-none focus:border-[#06539D]"
+        />
+        {searchInput && (
+          <button
+            type="button"
+            onClick={handleReset}
+            className="rounded-full bg-[#ccd6e4] px-4 py-2 text-sm font-bold"
+          >
+            초기화
+          </button>
+        )}
+      </div>
+
+      <p className="text-xs text-[#8a9ab5]">
+        총 <span className="font-bold text-[#1a2a3a]">{total}</span>명 완주
+        {search && <span> · 검색: "{search}"</span>}
+      </p>
+
+      {error && (
+        <p className="rounded-xl bg-[#eff6ff] px-3 py-2 text-xs text-[#05437E]">{error}</p>
+      )}
+
+      {loading ? (
+        <p className="py-8 text-center text-sm text-[#8a9ab5]">불러오는 중…</p>
+      ) : rows.length === 0 ? (
+        <p className="py-8 text-center text-sm text-[#8a9ab5]">완주자가 없습니다.</p>
+      ) : (
+        <div
+          className="overflow-x-auto rounded-2xl border border-[#e2ecf5]"
+          style={{ WebkitOverflowScrolling: "touch" }}
+        >
+          <table className="w-full min-w-[480px] text-sm">
+            <thead className="bg-[#f7f9fc] text-left text-xs font-semibold text-[#5f6f88]">
+              <tr>
+                <th className="whitespace-nowrap px-3 py-2.5">No.</th>
+                <th className="whitespace-nowrap px-3 py-2.5">이름</th>
+                <th className="whitespace-nowrap px-3 py-2.5">전화번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">추첨번호</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">인증 사진</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#eef2f8]">
+              {rows.map((row, idx) => (
+                <tr key={row.id} className="hover:bg-[#fafbfd]">
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#8a9ab5]">
+                    {(page - 1) * PAGE_SIZE + idx + 1}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 font-medium text-[#1a2a3a]">{row.name}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-[#4e5f75]">{row.phone}</td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center font-mono font-bold text-[#06539D]">
+                    {String(row.id).padStart(6, "0")}
+                  </td>
+                  <td className="whitespace-nowrap px-3 py-2.5 text-center">
+                    {row.has_photo ? (
+                      <button
+                        type="button"
+                        onClick={() => setViewingFinisher(row)}
+                        className="rounded-lg bg-[#eef2f8] px-2.5 py-1 text-xs font-bold text-[#3a4a5c] hover:bg-[#e0e9f5]"
+                      >
+                        사진 보기
+                      </button>
+                    ) : (
+                      <span className="text-[#c9d3e0]">미등록</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* 페이지네이션 */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            disabled={page === 1}
+            className="rounded-full bg-[#eef2f8] px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+          >
+            이전
+          </button>
+          <span className="text-xs text-[#5f6f88]">
+            {page} / {totalPages}
+          </span>
+          <button
+            type="button"
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            disabled={page === totalPages}
+            className="rounded-full bg-[#eef2f8] px-3 py-1.5 text-xs font-bold disabled:opacity-40"
+          >
+            다음
+          </button>
+        </div>
+      )}
+
+      {viewingFinisher && (
+        <FinisherPhotoModal finisher={viewingFinisher} onClose={() => setViewingFinisher(null)} />
       )}
     </div>
   );
@@ -474,6 +702,7 @@ function BoothsTab() {
 
 const TABS = [
   { id: "participants", label: "👥 참여자 관리" },
+  { id: "finishers", label: "🏁 완주자 명단" },
   { id: "booths", label: "🏕️ 부스 관리" },
 ];
 
@@ -520,7 +749,9 @@ export default function AdminPage({ onExit }) {
       {/* 콘텐츠 — 헤더 아래 영역을 채우며 독립 스크롤 */}
       <main className="flex-1 overflow-y-auto">
         <div className="mx-auto max-w-3xl px-4 py-6">
-          {activeTab === "participants" ? <ParticipantsTab /> : <BoothsTab />}
+          {activeTab === "participants" && <ParticipantsTab />}
+          {activeTab === "finishers" && <FinishersTab />}
+          {activeTab === "booths" && <BoothsTab />}
         </div>
       </main>
     </div>
