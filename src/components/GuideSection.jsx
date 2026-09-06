@@ -12,14 +12,11 @@ const GUIDE_ITEMS = [
 ];
 
 export default function GuideSection() {
-  const [activeId, setActiveId] = useState(GUIDE_ITEMS[0].id);
   const [zoomImage, setZoomImage] = useState(null);
-
-  const activeItem = GUIDE_ITEMS.find((item) => item.id === activeId) ?? GUIDE_ITEMS[0];
 
   return (
     <>
-      <section className="soft-card space-y-4 p-4 md:p-7">
+      <section className="soft-card space-y-5 p-4 md:p-7">
         <div>
           <h2 className="text-xl font-bold">행사 안내</h2>
           <p className="mt-1 text-sm text-[#5f6f88]">
@@ -27,37 +24,21 @@ export default function GuideSection() {
           </p>
         </div>
 
-        {/* 이미지 4장을 한 화면에 나열하는 대신, 섹션 내부 세그먼트(탭) 전환 방식으로 구성했습니다.
-            하단 메인 네비게이션에 스와이프를 도입하면 다른 핵심 메뉴(도장판 등)가 가려지거나
-            찾기 어려워질 수 있어, 안내 콘텐츠 전환은 이 섹션 내부에서 해결합니다. */}
-        <div className="flex gap-2 overflow-x-auto pb-1">
-          {GUIDE_ITEMS.map((item) => (
+        {/* 탭 전환 대신 4장을 세로로 나열해 스크롤로 훑어볼 수 있게 구성했습니다.
+            탭을 눌러야 다음 이미지를 볼 수 있는 클릭 부담을 줄이고, 순서대로 자연스럽게
+            읽어 내려가도록 하기 위함입니다. */}
+        {GUIDE_ITEMS.map((item) => (
+          <div key={item.id} className="space-y-2">
+            <p className="text-sm font-bold text-[#3a4a5c]">{item.label}</p>
             <button
-              key={item.id}
               type="button"
-              onClick={() => setActiveId(item.id)}
-              className={`shrink-0 whitespace-nowrap rounded-full px-4 py-2 text-sm font-bold transition ${
-                activeId === item.id
-                  ? "bg-[#06539D] text-white shadow-soft"
-                  : "bg-[#f3f6fb] text-[#6c7b90] hover:bg-[#e7edf6]"
-              }`}
+              onClick={() => setZoomImage(item)}
+              className="block w-full overflow-hidden rounded-bubble bg-[#f3f6fb]"
             >
-              {item.label}
+              <img src={item.image} alt={item.alt} className="w-full object-contain" />
             </button>
-          ))}
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setZoomImage(activeItem)}
-          className="block w-full overflow-hidden rounded-bubble bg-[#f3f6fb]"
-        >
-          <img
-            src={activeItem.image}
-            alt={activeItem.alt}
-            className="w-full object-contain"
-          />
-        </button>
+          </div>
+        ))}
         <p className="text-center text-xs text-[#8a97ab]">이미지를 탭하면 크게 볼 수 있어요.</p>
       </section>
 
