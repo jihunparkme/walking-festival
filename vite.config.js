@@ -564,6 +564,102 @@ export default defineConfig(({ mode }) => {
             res.statusCode = 405;
             res.end(JSON.stringify({ error: "Method not allowed" }));
           });
+
+          // /api/admin/finishers — GET(완주자 검색/페이지네이션)
+          server.middlewares.use("/api/admin/finishers", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (!checkAdmin(req, res, env)) return;
+            if (req.method !== "GET") {
+              res.statusCode = 405;
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+
+            const url = new URL(req.url, "http://localhost");
+            const search = url.searchParams.get("search") ?? "";
+            const page = Math.max(1, parseInt(url.searchParams.get("page") ?? "1", 10));
+            const from = (page - 1) * PAGE_SIZE;
+
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+            let query = supabase
+              .from("participants")
+              .select("id, name, phone, finish_photo_path", { count: "exact" })
+              .eq("is_finish_completed", true)
+              .order("id", { ascending: true })
+              .range(from, from + PAGE_SIZE - 1);
+
+            if (search.trim()) {
+              const s = search.trim();
+              const safe = escapeFilter(s);
+              const filters = [`name.ilike.%${safe}%`, `phone.ilike.%${safe}%`];
+              const formatted = formatPhone(s);
+              if (formatted) filters.push(`phone.ilike.%${formatted}%`);
+              query = query.or(filters.join(","));
+            }
+
+            const { data, error, count } = await query;
+            if (error) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: "완주자 정보를 불러오는 중 오류가 발생했습니다." }));
+              return;
+            }
+            const finishers = (data ?? []).map(({ finish_photo_path, ...rest }) => ({
+              ...rest,
+              has_photo: Boolean(finish_photo_path),
+            }));
+            res.statusCode = 200;
+            res.end(JSON.stringify({ data: finishers, count, page, pageSize: PAGE_SIZE }));
+          });
+
+          // /api/admin/finisher-photo — GET(완주 인증 사진 서명 URL 발급)
+          server.middlewares.use("/api/admin/finisher-photo", async (req, res) => {
+            res.setHeader("Content-Type", "application/json");
+            if (!checkAdmin(req, res, env)) return;
+            if (req.method !== "GET") {
+              res.statusCode = 405;
+              res.end(JSON.stringify({ error: "Method not allowed" }));
+              return;
+            }
+
+            const url = new URL(req.url, "http://localhost");
+            const id = url.searchParams.get("id");
+            if (!id) {
+              res.statusCode = 400;
+              res.end(JSON.stringify({ error: "id는 필수입니다." }));
+              return;
+            }
+
+            const supabase = createClient(env.VITE_SUPABASE_URL, env.SUPABASE_SERVICE_ROLE_KEY);
+            const { data: participant, error } = await supabase
+              .from("participants")
+              .select("finish_photo_path, is_finish_completed")
+              .eq("id", id)
+              .maybeSingle();
+
+            if (error || !participant || !participant.is_finish_completed) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: "완주자를 찾을 수 없습니다." }));
+              return;
+            }
+            if (!participant.finish_photo_path) {
+              res.statusCode = 404;
+              res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." }));
+              return;
+            }
+
+            const { data: signed, error: signError } = await supabase.storage
+              .from("walking-festival")
+              .createSignedUrl(participant.finish_photo_path, 60 * 10);
+
+            if (signError || !signed) {
+              res.statusCode = 500;
+              res.end(JSON.stringify({ error: "사진을 불러오는 중 오류가 발생했습니다." }));
+              return;
+            }
+
+            res.statusCode = 200;
+            res.end(JSON.stringify({ url: signed.signedUrl }));
+          });
         },
       },
     ],

@@ -39,6 +39,28 @@ export async function fetchAdminParticipants({ search = "", page = 1 } = {}) {
   return res.json();
 }
 
+export async function fetchAdminFinishers({ search = "", page = 1 } = {}) {
+  const params = new URLSearchParams({ page });
+  if (search.trim()) params.set("search", search.trim());
+  const res = await fetch(`/api/admin/finishers?${params}`, {
+    headers: adminHeaders(),
+  });
+  if (!res.ok) throw new Error("완주자 정보를 불러오는 중 오류가 발생했습니다.");
+  return res.json();
+}
+
+export async function fetchAdminFinisherPhotoUrl(id) {
+  const res = await fetch(`/api/admin/finisher-photo?id=${id}`, {
+    headers: adminHeaders(),
+  });
+  if (!res.ok) {
+    const json = await res.json().catch(() => ({}));
+    throw new Error(json.error || "사진을 불러오는 중 오류가 발생했습니다.");
+  }
+  const json = await res.json();
+  return json.url;
+}
+
 export async function fetchAdminBooths() {
   const res = await fetch("/api/admin/booths", { headers: adminHeaders() });
   if (!res.ok) throw new Error("부스 정보를 불러오는 중 오류가 발생했습니다.");
