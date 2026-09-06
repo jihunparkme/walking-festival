@@ -702,8 +702,8 @@ function BoothsTab() {
 
 const TABS = [
   { id: "participants", label: "👥 참여자 관리" },
-  { id: "finishers", label: "🏁 완주자 명단" },
   { id: "booths", label: "🏕️ 부스 관리" },
+  { id: "finishers", label: "🏁 완주자 명단" },
 ];
 
 export default function AdminPage({ onExit }) {
