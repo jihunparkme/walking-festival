@@ -3,6 +3,7 @@ import AdminPage from "./components/AdminPage";
 import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
 import ChallengeCompleteModal from "./components/ChallengeCompleteModal";
+import GuideSection from "./components/GuideSection";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
@@ -76,7 +77,7 @@ function parseStampQrText(text) {
 export default function App() {
   const [tab, setTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    return hash === "stamp" || hash === "finishPhoto" ? hash : "home";
+    return hash === "stamp" || hash === "finishPhoto" || hash === "guide" ? hash : "home";
   });
   // 도장은 로컬 캐시(localStorage) 없이 항상 서버(fetchMe, fetchMyStamps)를
   // 단일 진실 공급원(source of truth)으로 사용한다. 로그인 세션 확인 전까지는 빈 값으로 시작한다.
@@ -329,6 +330,7 @@ export default function App() {
                 onReturningLoginClick={openReturningLoginModal}
               />
             )}
+            {tab === "guide" && <GuideSection />}
             {tab === "stamp" && authStatus === "ok" && (
               <StampCardSection
                 boothItems={boothItems}
