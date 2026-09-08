@@ -21,7 +21,12 @@ export default function QrScanCamera({ title, onScan, onClose }) {
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId = null;
     if (!canvasRef.current) canvasRef.current = document.createElement("canvas");
+
+    // 매 프레임(약 60fps)마다 풀 해상도 getImageData를 수행하면 저사양 기기에서
+    // 디코딩이 밀려 오히려 인식률이 떨어질 수 있어, 약 120ms 간격으로 스로틀링한다.
+    const SCAN_INTERVAL_MS = 120;
 
     function tick() {
       if (cancelled) return;
@@ -49,13 +54,25 @@ export default function QrScanCamera({ title, onScan, onClose }) {
           setError("유효하지 않은 QR 코드입니다. 다시 시도해 주세요.");
         }
       }
-      rafRef.current = requestAnimationFrame(tick);
+      // requestAnimationFrame(매 프레임)만 쓰면 저사양 기기에서 디코딩이 밀려 오히려
+      // 인식률이 떨어질 수 있어, setTimeout으로 다음 스캔 시점을 스로틀링한 뒤
+      // 실제 픽셀 읽기는 rAF 타이밍에 맞춰 수행한다.
+      timeoutId = setTimeout(() => {
+        rafRef.current = requestAnimationFrame(tick);
+      }, SCAN_INTERVAL_MS);
     }
 
     async function start() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { ideal: "environment" } },
+          video: {
+            facingMode: { ideal: "environment" },
+            // 기본 해상도가 낮으면(예: 640x480) QR 모듈이 뭉개져 디코딩이 실패하기 쉬우므로
+            // 충분히 높은 해상도를 요청한다. 기기가 지원하지 않으면 브라우저가 자동으로
+            // 가능한 가장 가까운 값으로 조정한다.
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+          },
           audio: false,
         });
         if (cancelled) {
@@ -63,6 +80,15 @@ export default function QrScanCamera({ title, onScan, onClose }) {
           return;
         }
         streamRef.current = stream;
+
+        // 일부 기기/브라우저는 연속 자동초점(continuous autofocus)을 지원한다.
+        // 지원하지 않으면 조용히 무시되므로 안전하게 시도만 한다.
+        const [track] = stream.getVideoTracks();
+        const capabilities = track?.getCapabilities?.();
+        if (capabilities?.focusMode?.includes("continuous")) {
+          track.applyConstraints({ advanced: [{ focusMode: "continuous" }] }).catch(() => {});
+        }
+
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
@@ -80,6 +106,7 @@ export default function QrScanCamera({ title, onScan, onClose }) {
     return () => {
       cancelled = true;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      if (timeoutId) clearTimeout(timeoutId);
       if (streamRef.current) streamRef.current.getTracks().forEach((track) => track.stop());
     };
   }, [onScan]);
