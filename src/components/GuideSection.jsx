@@ -47,6 +47,14 @@ export default function GuideSection() {
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4"
           onClick={() => setZoomImage(null)}
         >
+          <button
+            type="button"
+            onClick={() => setZoomImage(null)}
+            aria-label="닫기"
+            className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-full bg-white/90 text-xl font-bold text-[#3a4a5c] shadow-soft"
+          >
+            ✕
+          </button>
           <img
             src={zoomImage.image}
             alt={zoomImage.alt}
