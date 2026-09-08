@@ -3,6 +3,7 @@ import AdminPage from "./components/AdminPage";
 import AdminPasswordModal from "./components/AdminPasswordModal";
 import BottomNav from "./components/BottomNav";
 import ChallengeCompleteModal from "./components/ChallengeCompleteModal";
+import GuideSection from "./components/GuideSection";
 import HomeSection from "./components/HomeSection";
 import LoginModal from "./components/LoginModal";
 import FinishPhotoSection from "./components/FinishPhotoSection";
@@ -46,7 +47,7 @@ const URL_BOOTH_ID = isStampPath ? urlParams.get("booth") : null;
 const URL_BOOTH_SIG = isStampPath ? urlParams.get("sig") : null;
 const URL_CHECKPOINT_TYPE = isStampPath ? urlParams.get("type") : null;
 const VALID_CHECKPOINT_TYPES = ["turn", "finish"];
-const CHECKPOINT_TITLES = { turn: "반환점", finish: "완주" };
+const CHECKPOINT_TITLES = { turn: "반환점", finish: "완보" };
 const URL_TYPE = VALID_CHECKPOINT_TYPES.includes(URL_CHECKPOINT_TYPE) ? URL_CHECKPOINT_TYPE : null;
 
 if ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) {
@@ -55,7 +56,7 @@ if ((URL_BOOTH_ID && URL_BOOTH_SIG) || URL_TYPE) {
 
 /**
  * 앱 내 카메라로 스캔한 QR 문자열이 유효한 도장/체크포인트 인증 링크(/stamp?...)인지 확인하고,
- * 부스 인증 또는 반환점/완주 인증에 필요한 정보를 추출합니다. 유효하지 않으면 null을 반환합니다.
+ * 부스 인증 또는 반환점/완보 인증에 필요한 정보를 추출합니다. 유효하지 않으면 null을 반환합니다.
  */
 function parseStampQrText(text) {
   try {
@@ -76,7 +77,7 @@ function parseStampQrText(text) {
 export default function App() {
   const [tab, setTab] = useState(() => {
     const hash = window.location.hash.replace("#", "");
-    return hash === "stamp" || hash === "finishPhoto" ? hash : "home";
+    return hash === "stamp" || hash === "finishPhoto" || hash === "guide" ? hash : "home";
   });
   // 도장은 로컬 캐시(localStorage) 없이 항상 서버(fetchMe, fetchMyStamps)를
   // 단일 진실 공급원(source of truth)으로 사용한다. 로그인 세션 확인 전까지는 빈 값으로 시작한다.
@@ -168,7 +169,7 @@ export default function App() {
       .catch(console.error);
   }, [authStatus]);
 
-  // 새로고침 등으로 해시가 "#finishPhoto"로 복원됐지만 접근 조건(완주 인증 + 사진 등록)이
+  // 새로고침 등으로 해시가 "#finishPhoto"로 복원됐지만 접근 조건(완보 인증 + 사진 등록)이
   // 아직 충족되지 않은 경우(세션 만료, 사진 미등록 등) 홈 탭으로 되돌린다.
   useEffect(() => {
     if (tab !== "finishPhoto" || authStatus === "loading") return;
@@ -329,6 +330,7 @@ export default function App() {
                 onReturningLoginClick={openReturningLoginModal}
               />
             )}
+            {tab === "guide" && <GuideSection />}
             {tab === "stamp" && authStatus === "ok" && (
               <StampCardSection
                 boothItems={boothItems}

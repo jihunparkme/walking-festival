@@ -13,7 +13,7 @@ export default function StampCardSection({
 }) {
   const checkpointItems = [
     { key: "turn", title: "반환점", subtitle: "반환점 통과 인증", done: isTurnCompleted },
-    { key: "finish", title: "완주", subtitle: "완주 인증", done: isFinishCompleted },
+    { key: "finish", title: "완보", subtitle: "완보 인증", done: isFinishCompleted },
   ];
 
   // booth_id가 "완료확인"인 항목은 미션 부스가 아니라 경품 수령 여부를 확인하기 위한
@@ -138,7 +138,7 @@ export default function StampCardSection({
       <div className="mt-6 border-t border-[#eef2f8] pt-5">
         <h3 className="text-sm font-bold text-[#3a4a5c]">걷기 인증</h3>
         <p className="mt-1 text-xs text-[#8a9ab5]">
-          카드를 클릭해 카메라로 반환점/완주 지점의 QR 코드를 스캔하면 인증됩니다.
+          카드를 클릭해 카메라로 반환점/완보 지점의 QR 코드를 스캔하면 인증됩니다.
         </p>
         <div className="mt-3 grid grid-cols-2 gap-3">
           {checkpointItems.map((item) => (

@@ -39,11 +39,11 @@ export default withSentry(async function handler(req, res) {
     .maybeSingle();
 
   if (error || !participant || !participant.is_finish_completed) {
-    return res.status(404).json({ error: "완주자를 찾을 수 없습니다." });
+    return res.status(404).json({ error: "완보자를 찾을 수 없습니다." });
   }
 
   if (!participant.finish_photo_path) {
-    return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
+    return res.status(404).json({ error: "등록된 완보 사진이 없습니다." });
   }
 
   const { data: signed, error: signError } = await supabase.storage

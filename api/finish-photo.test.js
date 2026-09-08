@@ -70,7 +70,7 @@ describe("GET /api/finish-photo", () => {
     expect(res.body).toEqual({ error: "인증이 필요합니다." });
   });
 
-  it("등록된 완주 사진이 없으면 404를 응답한다", async () => {
+  it("등록된 완보 사진이 없으면 404를 응답한다", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({
@@ -204,7 +204,7 @@ describe("POST /api/finish-photo", () => {
     expect(res.body).toEqual({ error: "이미지 파일만 업로드할 수 있습니다." });
   });
 
-  it("완주 인증이 완료되지 않았으면 400을 응답한다", async () => {
+  it("완보 인증이 완료되지 않았으면 400을 응답한다", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({
@@ -226,7 +226,7 @@ describe("POST /api/finish-photo", () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(400);
-    expect(res.body).toEqual({ error: "완주 인증을 먼저 완료해 주세요." });
+    expect(res.body).toEqual({ error: "완보 인증을 먼저 완료해 주세요." });
   });
 
   it("정상 업로드 요청이면 200으로 성공을 응답한다", async () => {

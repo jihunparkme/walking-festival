@@ -107,7 +107,7 @@ function ParticipantsTab() {
                 <th className="whitespace-nowrap px-3 py-2.5">전화번호</th>
                 <th className="whitespace-nowrap px-3 py-2.5 text-center">추첨번호</th>
                 <th className="whitespace-nowrap px-3 py-2.5 text-center">반환점</th>
-                <th className="whitespace-nowrap px-3 py-2.5 text-center">완주</th>
+                <th className="whitespace-nowrap px-3 py-2.5 text-center">완보</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#eef2f8]">
@@ -170,7 +170,7 @@ function ParticipantsTab() {
   );
 }
 
-// ─── 완주자 탭 ──────────────────────────────────────────────────────────────
+// ─── 완보자 탭 ──────────────────────────────────────────────────────────────
 
 function FinisherPhotoModal({ finisher, onClose }) {
   const [status, setStatus] = useState("loading"); // "loading" | "ready" | "error"
@@ -204,7 +204,7 @@ function FinisherPhotoModal({ finisher, onClose }) {
       >
         <div className="flex items-center justify-between">
           <h4 className="text-base font-extrabold text-[#1a2a3a]">
-            {finisher.name}님의 완주 인증 사진
+            {finisher.name}님의 완보 인증 사진
           </h4>
           <button
             type="button"
@@ -224,7 +224,7 @@ function FinisherPhotoModal({ finisher, onClose }) {
           {status === "ready" && (
             <img
               src={photoUrl}
-              alt={`${finisher.name}님의 완주 인증 사진`}
+              alt={`${finisher.name}님의 완보 인증 사진`}
               className="max-h-[24rem] w-full rounded-2xl object-cover"
             />
           )}
@@ -306,7 +306,7 @@ function FinishersTab() {
       </div>
 
       <p className="text-xs text-[#8a9ab5]">
-        총 <span className="font-bold text-[#1a2a3a]">{total}</span>명 완주
+        총 <span className="font-bold text-[#1a2a3a]">{total}</span>명 완보
         {search && <span> · 검색: "{search}"</span>}
       </p>
 
@@ -317,7 +317,7 @@ function FinishersTab() {
       {loading ? (
         <p className="py-8 text-center text-sm text-[#8a9ab5]">불러오는 중…</p>
       ) : rows.length === 0 ? (
-        <p className="py-8 text-center text-sm text-[#8a9ab5]">완주자가 없습니다.</p>
+        <p className="py-8 text-center text-sm text-[#8a9ab5]">완보자가 없습니다.</p>
       ) : (
         <div
           className="overflow-x-auto rounded-2xl border border-[#e2ecf5]"
@@ -703,7 +703,7 @@ function BoothsTab() {
 const TABS = [
   { id: "participants", label: "👥 참여자 관리" },
   { id: "booths", label: "🏕️ 부스 관리" },
-  { id: "finishers", label: "🏁 완주자 명단" },
+  { id: "finishers", label: "🏁 완보자 명단" },
 ];
 
 export default function AdminPage({ onExit }) {

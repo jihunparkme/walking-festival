@@ -40,7 +40,7 @@ export default withSentry(async function handler(req, res) {
   const from = (pageNum - 1) * PAGE_SIZE;
   const s = search.trim();
 
-  // 완주자만 조회 — finish_photo_path는 private 버킷 경로이므로 목록에서는
+  // 완보자만 조회 — finish_photo_path는 private 버킷 경로이므로 목록에서는
   // has_photo(boolean)로만 노출하고, 실제 사진은 /api/admin/finisher-photo에서
   // 서명된 URL로 별도 발급한다.
   let query = supabase
@@ -62,7 +62,7 @@ export default withSentry(async function handler(req, res) {
 
   if (error) {
     console.error("finishers fetch error:", error);
-    return res.status(500).json({ error: "완주자 정보를 불러오는 중 오류가 발생했습니다." });
+    return res.status(500).json({ error: "완보자 정보를 불러오는 중 오류가 발생했습니다." });
   }
 
   const finishers = (data ?? []).map(({ finish_photo_path, ...rest }) => ({

@@ -41,7 +41,7 @@ export async function compressImage(file, { maxDimension = MAX_DIMENSION, qualit
 }
 
 /**
- * 완주 인증 사진을 업로드합니다. (완주 QR 인증이 먼저 완료되어 있어야 합니다)
+ * 완보 인증 사진을 업로드합니다. (완보 QR 인증이 먼저 완료되어 있어야 합니다)
  * HttpOnly 쿠키로 참여자를 식별하므로 별도 인증 헤더 불필요.
  * 파일명은 서버가 세션의 이름/전화번호로 직접 생성합니다.
  */
@@ -66,7 +66,7 @@ export async function uploadFinishPhoto(file) {
 }
 
 /**
- * 등록된 완주 인증 사진의 서명된 URL(임시, private 버킷)을 조회합니다.
+ * 등록된 완보 인증 사진의 서명된 URL(임시, private 버킷)을 조회합니다.
  * HttpOnly 쿠키로 참여자를 식별하므로 별도 인증 헤더 불필요.
  */
 export async function fetchFinishPhotoUrl() {

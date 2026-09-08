@@ -29,7 +29,7 @@ export default withSentry(async function handler(req, res) {
     return res.status(400).json({ error: "type은 turn 또는 finish여야 합니다." });
   }
 
-  // 이미 확보한 token 재사용 (해당 체크포인트 완료 여부 + 반환점 완료 여부 + 완주 사진 등록 여부 함께 조회)
+  // 이미 확보한 token 재사용 (해당 체크포인트 완료 여부 + 반환점 완료 여부 + 완보 사진 등록 여부 함께 조회)
   const participant = await fetchParticipantByToken(
     req,
     res,
@@ -39,7 +39,7 @@ export default withSentry(async function handler(req, res) {
   );
   if (!participant) return;
 
-  // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
+  // 완보 인증은 반환점 인증이 먼저 완료되어야 진행 가능
   if (type === "finish" && !participant.is_turn_completed) {
     return res.status(403).json({
       error: "반환점 QR 코드를 먼저 찍은 후 이용해 주세요.",
@@ -48,11 +48,11 @@ export default withSentry(async function handler(req, res) {
   }
 
   if (participant[field]) {
-    // 완주 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우(중간 이탈 등)
+    // 완보 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우(중간 이탈 등)
     // 단순 중복 오류 대신 사진 재등록이 가능하도록 안내한다.
     if (type === "finish" && !participant.finish_photo_path) {
       return res.status(409).json({
-        error: "완주 인증은 완료되었지만 사진이 등록되지 않았습니다.",
+        error: "완보 인증은 완료되었지만 사진이 등록되지 않았습니다.",
         type,
         needsPhoto: true,
       });
