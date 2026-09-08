@@ -267,7 +267,7 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ success: true, boothId }));
           });
 
-          // POST /api/checkpoint — 반환점/완주 QR 인증
+          // POST /api/checkpoint — 반환점/완보 QR 인증
           server.middlewares.use("/api/checkpoint", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
             if (req.method !== "POST") {
@@ -288,7 +288,7 @@ export default defineConfig(({ mode }) => {
             );
             if (!participant) return;
 
-            // 완주 인증은 반환점 인증이 먼저 완료되어야 진행 가능
+            // 완보 인증은 반환점 인증이 먼저 완료되어야 진행 가능
             if (type === "finish" && !participant.is_turn_completed) {
               res.statusCode = 403;
               res.end(JSON.stringify({ error: "반환점 QR 코드를 먼저 찍은 후 이용해 주세요.", code: "TURN_REQUIRED" }));
@@ -296,10 +296,10 @@ export default defineConfig(({ mode }) => {
             }
 
             if (participant[field]) {
-              // 완주 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우 재등록을 허용
+              // 완보 인증은 이미 완료됐지만 사진을 아직 등록하지 못한 경우 재등록을 허용
               if (type === "finish" && !participant.finish_photo_path) {
                 res.statusCode = 409;
-                res.end(JSON.stringify({ error: "완주 인증은 완료되었지만 사진이 등록되지 않았습니다.", type, needsPhoto: true }));
+                res.end(JSON.stringify({ error: "완보 인증은 완료되었지만 사진이 등록되지 않았습니다.", type, needsPhoto: true }));
                 return;
               }
               res.statusCode = 409; res.end(JSON.stringify({ error: "이미 인증이 완료되었습니다.", type })); return;
@@ -325,7 +325,7 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ success: true, type }));
           });
 
-          // GET/POST /api/finish-photo — 완주 인증샷 조회(서명된 URL)/업로드 (walking-festival private 버킷)
+          // GET/POST /api/finish-photo — 완보 인증샷 조회(서명된 URL)/업로드 (walking-festival private 버킷)
           const FINISH_PHOTO_SIGNED_URL_EXPIRES_IN = 60 * 10;
           server.middlewares.use("/api/finish-photo", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
@@ -334,7 +334,7 @@ export default defineConfig(({ mode }) => {
             if (req.method === "GET") {
               const participant = await requireParticipantLocal(supabase, req, res, "id, finish_photo_path");
               if (!participant) return;
-              if (!participant.finish_photo_path) { res.statusCode = 404; res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." })); return; }
+              if (!participant.finish_photo_path) { res.statusCode = 404; res.end(JSON.stringify({ error: "등록된 완보 사진이 없습니다." })); return; }
 
               const { data: signed, error: signError } = await supabase.storage
                 .from("walking-festival")
@@ -365,7 +365,7 @@ export default defineConfig(({ mode }) => {
             );
             if (!participant) return;
             if (!participant.is_finish_completed) {
-              res.statusCode = 400; res.end(JSON.stringify({ error: "완주 인증을 먼저 완료해 주세요." })); return;
+              res.statusCode = 400; res.end(JSON.stringify({ error: "완보 인증을 먼저 완료해 주세요." })); return;
             }
 
             const buffer = Buffer.from(fileBase64.split(",").pop(), "base64");
@@ -565,7 +565,7 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ error: "Method not allowed" }));
           });
 
-          // /api/admin/finishers — GET(완주자 검색/페이지네이션)
+          // /api/admin/finishers — GET(완보자 검색/페이지네이션)
           server.middlewares.use("/api/admin/finishers", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
             if (!checkAdmin(req, res, env)) return;
@@ -600,7 +600,7 @@ export default defineConfig(({ mode }) => {
             const { data, error, count } = await query;
             if (error) {
               res.statusCode = 500;
-              res.end(JSON.stringify({ error: "완주자 정보를 불러오는 중 오류가 발생했습니다." }));
+              res.end(JSON.stringify({ error: "완보자 정보를 불러오는 중 오류가 발생했습니다." }));
               return;
             }
             const finishers = (data ?? []).map(({ finish_photo_path, ...rest }) => ({
@@ -611,7 +611,7 @@ export default defineConfig(({ mode }) => {
             res.end(JSON.stringify({ data: finishers, count, page, pageSize: PAGE_SIZE }));
           });
 
-          // /api/admin/finisher-photo — GET(완주 인증 사진 서명 URL 발급)
+          // /api/admin/finisher-photo — GET(완보 인증 사진 서명 URL 발급)
           server.middlewares.use("/api/admin/finisher-photo", async (req, res) => {
             res.setHeader("Content-Type", "application/json");
             if (!checkAdmin(req, res, env)) return;
@@ -638,12 +638,12 @@ export default defineConfig(({ mode }) => {
 
             if (error || !participant || !participant.is_finish_completed) {
               res.statusCode = 404;
-              res.end(JSON.stringify({ error: "완주자를 찾을 수 없습니다." }));
+              res.end(JSON.stringify({ error: "완보자를 찾을 수 없습니다." }));
               return;
             }
             if (!participant.finish_photo_path) {
               res.statusCode = 404;
-              res.end(JSON.stringify({ error: "등록된 완주 사진이 없습니다." }));
+              res.end(JSON.stringify({ error: "등록된 완보 사진이 없습니다." }));
               return;
             }
 

@@ -34,7 +34,7 @@ export default withSentry(async function handler(req, res) {
     if (!participant) return;
 
     if (!participant.finish_photo_path) {
-      return res.status(404).json({ error: "등록된 완주 사진이 없습니다." });
+      return res.status(404).json({ error: "등록된 완보 사진이 없습니다." });
     }
 
     const { data: signed, error: signError } = await supabase.storage
@@ -76,7 +76,7 @@ export default withSentry(async function handler(req, res) {
   if (!participant) return;
 
   if (!participant.is_finish_completed) {
-    return res.status(400).json({ error: "완주 인증을 먼저 완료해 주세요." });
+    return res.status(400).json({ error: "완보 인증을 먼저 완료해 주세요." });
   }
 
   const buffer = Buffer.from(fileBase64.split(",").pop(), "base64");

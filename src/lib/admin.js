@@ -45,7 +45,7 @@ export async function fetchAdminFinishers({ search = "", page = 1 } = {}) {
   const res = await fetch(`/api/admin/finishers?${params}`, {
     headers: adminHeaders(),
   });
-  if (!res.ok) throw new Error("완주자 정보를 불러오는 중 오류가 발생했습니다.");
+  if (!res.ok) throw new Error("완보자 정보를 불러오는 중 오류가 발생했습니다.");
   return res.json();
 }
 

@@ -97,7 +97,7 @@ describe("POST /api/checkpoint", () => {
     expect(supabase.from).not.toHaveBeenCalled();
   });
 
-  it("반환점 인증 없이 완주(finish) 인증을 시도하면 403을 응답한다", async () => {
+  it("반환점 인증 없이 완보(finish) 인증을 시도하면 403을 응답한다", async () => {
     const { createClient } = await import("@supabase/supabase-js");
     createClient.mockReturnValue(
       createSupabaseMock({

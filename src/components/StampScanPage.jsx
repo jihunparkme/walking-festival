@@ -8,26 +8,26 @@ const STATUS = {
   SUCCESS: "success",     // 인증 완료
   DUPLICATE: "duplicate", // 이미 완료됨
   ERROR: "error",         // 오류
-  PHOTO: "photo",         // 완주 인증 완료 — 완주 사진 촬영 대기
-  PHOTO_SAVED: "photo_saved", // 완주 사진 업로드(저장) 완료
-  TURN_REQUIRED: "turn_required", // 완주 인증 시도했지만 반환점 인증이 먼저 필요함
+  PHOTO: "photo",         // 완보 인증 완료 — 완보 사진 촬영 대기
+  PHOTO_SAVED: "photo_saved", // 완보 사진 업로드(저장) 완료
+  TURN_REQUIRED: "turn_required", // 완보 인증 시도했지만 반환점 인증이 먼저 필요함
   NOT_PARTICIPATING: "not_participating", // 세션 확인 결과 캠페인 미참여(로그인 안 됨) 상태
 };
 
-// 체크포인트(반환점/완주) 표시 문구
+// 체크포인트(반환점/완보) 표시 문구
 const CHECKPOINT_LABEL = {
   turn: { title: "반환점", verb: "반환점 인증" },
-  finish: { title: "완주", verb: "완주 인증" },
+  finish: { title: "완보", verb: "완보 인증" },
 };
 
 /**
- * QR 코드 스캔 후 도장 적립 또는 반환점/완주 인증 처리 결과를
+ * QR 코드 스캔 후 도장 적립 또는 반환점/완보 인증 처리 결과를
  * 전체 화면 오버레이로 표시합니다.
  * 인증은 HttpOnly 쿠키로 자동 처리됩니다.
- * 완주(finish) 인증이 성공하면 자동 이동 대신 완주 사진 촬영 단계(PHOTO)로 전환되며,
+ * 완보(finish) 인증이 성공하면 자동 이동 대신 완보 사진 촬영 단계(PHOTO)로 전환되며,
  * 사진은 서버가 참여자 세션으로 walking-festival(private) 버킷에 업로드합니다.
  *
- * @param {"booth"|"checkpoint"} mode        - "booth": 부스 도장, "checkpoint": 반환점/완주 인증
+ * @param {"booth"|"checkpoint"} mode        - "booth": 부스 도장, "checkpoint": 반환점/완보 인증
  * @param {string}   boothId          - (booth 모드) URL 쿼리에서 읽은 부스 ID
  * @param {string}   boothSig         - (booth 모드) URL 쿼리에서 읽은 서버 서명(sig) — booth_id와 함께 검증됨
  * @param {string}   boothTitle       - (booth 모드) 부스 표시 이름 (없으면 boothId 사용)
@@ -49,7 +49,7 @@ export default function StampScanPage({
   const [errorMsg, setErrorMsg] = useState("");
   const processedRef = useRef(false);
 
-  // 완주(finish) 인증 후 사진 촬영 단계에서 사용
+  // 완보(finish) 인증 후 사진 촬영 단계에서 사용
   const [photoFile, setPhotoFile] = useState(null);
   const [photoPreview, setPhotoPreview] = useState("");
   const [photoUploading, setPhotoUploading] = useState(false);
@@ -98,7 +98,7 @@ export default function StampScanPage({
     })
       .then(async (res) => {
         if (res.ok) {
-          // 완주 인증은 성공 즉시 사진 촬영 단계로 전환 (자동 이동하지 않음)
+          // 완보 인증은 성공 즉시 사진 촬영 단계로 전환 (자동 이동하지 않음)
           if (isCheckpoint && checkpointType === "finish") {
             setStatus(STATUS.PHOTO);
             return;
@@ -107,7 +107,7 @@ export default function StampScanPage({
           setTimeout(() => onDone({ status: "success", mode, boothId, checkpointType }), 2000);
         } else if (res.status === 409) {
           const data = await res.json().catch(() => ({}));
-          // 완주 인증은 이미 완료됐지만 사진이 아직 등록되지 않은 경우
+          // 완보 인증은 이미 완료됐지만 사진이 아직 등록되지 않은 경우
           // 단순 중복 안내 대신 사진 촬영 단계로 다시 진입시켜 등록을 이어갈 수 있게 한다.
           if (isCheckpoint && checkpointType === "finish" && data.needsPhoto) {
             setStatus(STATUS.PHOTO);
@@ -155,7 +155,7 @@ export default function StampScanPage({
     setPhotoPreview(URL.createObjectURL(file));
   }
 
-  // "완주 사진 인증하기" / "다시 촬영하기" 클릭 시 OS 카메라 앱(capture 속성)을 여는 input 트리거
+  // "완보 사진 인증하기" / "다시 촬영하기" 클릭 시 OS 카메라 앱(capture 속성)을 여는 input 트리거
   function openCamera() {
     photoInputRef.current?.click();
   }
@@ -226,18 +226,18 @@ export default function StampScanPage({
       {status === STATUS.PHOTO && (
         <>
           <div className="mb-4 animate-bounce text-6xl">🎉</div>
-          <h2 className="text-2xl font-extrabold text-[#05437E]">완주 인증 완료!</h2>
+          <h2 className="text-2xl font-extrabold text-[#05437E]">완보 인증 완료!</h2>
 
           {!photoPreview ? (
             /* 촬영된 사진이 없으면 인증 버튼만 노출 */
             <>
-              <p className="mt-2 text-sm text-[#5b6c84]">완주를 기념하는 사진을 남겨주세요.</p>
+              <p className="mt-2 text-sm text-[#5b6c84]">완보를 기념하는 사진을 남겨주세요.</p>
               <button
                 type="button"
                 onClick={openCamera}
                 className="mt-5 rounded-bubble bg-[#05437E] px-6 py-3 text-sm font-bold text-white"
               >
-                완주 사진 인증하기
+                완보 사진 인증하기
               </button>
               <button
                 type="button"
@@ -252,7 +252,7 @@ export default function StampScanPage({
             <>
               <img
                 src={photoPreview}
-                alt="완주 사진 미리보기"
+                alt="완보 사진 미리보기"
                 className="mt-4 h-48 w-48 rounded-bubble object-cover shadow-soft"
               />
 
@@ -313,7 +313,7 @@ export default function StampScanPage({
         <>
           <div className="mb-4 animate-bounce text-6xl">✅</div>
           <h2 className="text-2xl font-extrabold text-[#05437E]">저장이 완료되었습니다!</h2>
-          <p className="mt-2 text-sm text-[#5b6c84]">완주 인증 사진이 정상적으로 저장되었습니다.</p>
+          <p className="mt-2 text-sm text-[#5b6c84]">완보 인증 사진이 정상적으로 저장되었습니다.</p>
 
           <SurveyBanner
             className="mt-5 w-full max-w-xs shadow-soft"
@@ -361,7 +361,7 @@ export default function StampScanPage({
           <div className="mb-4 text-5xl">🚩</div>
           <h2 className="text-xl font-extrabold">반환점 인증이 먼저 필요해요</h2>
           <p className="mt-2 text-sm text-[#5b6c84]">
-            완주 인증은 반환점 QR 코드를 먼저 찍은 후 이용해 주세요.
+            완보 인증은 반환점 QR 코드를 먼저 찍은 후 이용해 주세요.
           </p>
           <button
             type="button"

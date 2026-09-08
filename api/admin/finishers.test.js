@@ -106,7 +106,7 @@ describe("GET /api/admin/finishers", () => {
     await handler(req, res);
 
     expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.body).toEqual({ error: "완주자 정보를 불러오는 중 오류가 발생했습니다." });
+    expect(res.body).toEqual({ error: "완보자 정보를 불러오는 중 오류가 발생했습니다." });
   });
 
   it("returns 405 for non-GET methods", async () => {
