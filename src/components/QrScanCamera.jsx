@@ -33,8 +33,10 @@ export default function QrScanCamera({ title, onScan, onClose }) {
         const ctx = canvas.getContext("2d");
         ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        // 로고가 삽입된 QR(중앙 이미지로 인한 명암 반전 오인식 등)의 인식률을 높이기 위해
+        // 원본 이미지와 반전 이미지를 모두 시도한다.
         const code = jsQR(imageData.data, imageData.width, imageData.height, {
-          inversionAttempts: "dontInvert",
+          inversionAttempts: "attemptBoth",
         });
 
         // 동일한 QR을 프레임마다 반복 처리하지 않도록 마지막으로 처리한 값과 비교
