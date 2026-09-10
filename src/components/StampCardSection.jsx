@@ -63,8 +63,46 @@ export default function StampCardSection({
             상품을 받아가세요!
           </div>
         )}
+
+        <div className="mt-5 border-t border-[#eef2f8] pt-5">
+          <h3 className="text-sm font-bold text-[#3a4a5c]">걷기 인증</h3>
+          <p className="mt-1 text-xs text-[#8a9ab5]">
+            카드를 클릭해 카메라로 반환점/완보 지점의 QR 코드를 스캔하면 인증됩니다.
+          </p>
+          <div className="mt-3 grid grid-cols-2 gap-3">
+            {checkpointItems.map((item) => (
+              <button
+                key={item.key}
+                type="button"
+                disabled={item.done}
+                onClick={() => onSelectCheckpoint?.(item.key)}
+                className={`relative overflow-hidden rounded-3xl border-2 p-4 text-left ${
+                  item.done
+                    ? "border-transparent bg-[#06539D]/25"
+                    : "border-dashed border-[#b7c6db] bg-white active:bg-[#f3f6fb]"
+                }`}
+              >
+                {item.done && (
+                  <img
+                    src={stampSeal}
+                    alt="인증 완료"
+                    className="pointer-events-none absolute right-1 top-1 h-16 w-16 rotate-12 opacity-90"
+                  />
+                )}
+                <p className="text-sm font-bold">{item.title}</p>
+                <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
+                <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
+                  {item.done ? "✓ 인증 완료" : "📷 QR 인증하기"}
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
 
+      <div className="mt-6 border-t border-[#eef2f8] pt-5">
+        <h3 className="text-sm font-bold text-[#3a4a5c]">부스 인증</h3>
+      </div>
       <div className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-3">
         {sortedBoothItems.map((item) => {
           const done = Boolean(stamps[item.booth_id]);
@@ -134,41 +172,6 @@ export default function StampCardSection({
           </div>
         </div>
       )}
-
-      <div className="mt-6 border-t border-[#eef2f8] pt-5">
-        <h3 className="text-sm font-bold text-[#3a4a5c]">걷기 인증</h3>
-        <p className="mt-1 text-xs text-[#8a9ab5]">
-          카드를 클릭해 카메라로 반환점/완보 지점의 QR 코드를 스캔하면 인증됩니다.
-        </p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {checkpointItems.map((item) => (
-            <button
-              key={item.key}
-              type="button"
-              disabled={item.done}
-              onClick={() => onSelectCheckpoint?.(item.key)}
-              className={`relative overflow-hidden rounded-3xl border-2 p-4 text-left ${
-                item.done
-                  ? "border-transparent bg-[#06539D]/25"
-                  : "border-dashed border-[#b7c6db] bg-white active:bg-[#f3f6fb]"
-              }`}
-            >
-              {item.done && (
-                <img
-                  src={stampSeal}
-                  alt="인증 완료"
-                  className="pointer-events-none absolute right-1 top-1 h-16 w-16 rotate-12 opacity-90"
-                />
-              )}
-              <p className="text-sm font-bold">{item.title}</p>
-              <p className="mt-1 text-xs text-[#5f6f88]">{item.subtitle}</p>
-              <div className={`mt-3 text-xs font-semibold ${item.done ? "text-[#05437E]" : "text-[#8a9ab5]"}`}>
-                {item.done ? "✓ 인증 완료" : "📷 QR 인증하기"}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
     </section>
   );
 }
