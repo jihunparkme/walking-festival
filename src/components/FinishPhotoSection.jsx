@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchFinishPhotoUrl } from "../lib/finishPhoto";
 import finishStampSeal from "../assets/finish-stamp-seal.png";
+import finishBackground from "../assets/images/background.png";
 
 // 캠페인 고정 정보 (매년 동일 일자에 진행되는 단일 행사이므로 하드코딩)
 const FINISH_LOCATION = "평촌중앙공원 일대";
@@ -58,7 +59,15 @@ export default function FinishPhotoSection() {
   }
 
   return (
-    <section className="soft-card relative overflow-hidden p-4 md:p-7">
+    <section
+      className="soft-card relative overflow-hidden p-4 md:p-7"
+      style={{
+        backgroundImage: `url(${finishBackground})`,
+        backgroundSize: "cover",
+        backgroundPosition: "center bottom",
+      }}
+    >
+      <div className="absolute inset-0 bg-white/35" />
       <div className="absolute -right-10 -top-10 h-28 w-28 rounded-full bg-[#06539D]/20 opacity-70" />
       <div className="absolute -bottom-12 left-1/2 h-24 w-24 -translate-x-1/2 rounded-full bg-limeCloud opacity-80" />
 
@@ -134,7 +143,7 @@ export default function FinishPhotoSection() {
       </div>
 
       {status === "ready" && (
-        <div className="relative mx-auto mt-5 flex max-w-sm items-center gap-3 rounded-bubble bg-limeCloud px-4 py-3 text-sm font-semibold text-[#2e5b3f]">
+        <div className="relative mx-auto mt-5 flex max-w-sm items-center gap-3 rounded-bubble bg-limeCloud/70 px-4 py-3 text-sm font-semibold text-[#2e5b3f] backdrop-blur-sm">
           <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-white shadow-soft">💚</span>
           <p className="flex-1">함께한 걸음이 더 많은 생명을 살리는 시작입니다 😊</p>
           {/* 발자국 장식 (이모지 대신 SVG로 렌더링해 기기/폰트에 관계없이 브랜드 컬러 유지) */}
