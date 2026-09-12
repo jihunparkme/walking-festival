@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { fetchFinishPhotoUrl } from "../lib/finishPhoto";
-import finishStampSeal from "../assets/finish-stamp-seal.png";
-import finishBackground from "../assets/images/background.png";
+import finishStampSeal from "../assets/finish-stamp-seal.webp";
+import finishBackground from "../assets/images/background.webp";
 
 // 캠페인 고정 정보 (매년 동일 일자에 진행되는 단일 행사이므로 하드코딩)
 const FINISH_LOCATION = "평촌중앙공원 일대";
