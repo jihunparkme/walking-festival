@@ -109,19 +109,6 @@ export default function FinishPhotoSection() {
                 className="max-h-[28rem] w-full object-cover"
                 onError={handleImageError}
               />
-              {/* 손글씨 스타일 응원 문구 오버레이 */}
-              <p
-                className="handwriting pointer-events-none absolute left-4 top-4 max-w-[75%] text-lg leading-snug text-white [-webkit-text-stroke:1.2px_black] [paint-order:stroke_fill] md:text-xl"
-                style={{ textShadow: "0 1px 3px rgba(0,0,0,0.45)" }}
-              >
-                오늘,
-                <br />
-                함께 걸은 걸음이
-                <br />
-                생명을 지키는
-                <br />
-                희망이 됩니다 ♡
-              </p>
               {/* 하단 장소/일시 정보 오버레이 */}
               <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent px-4 pb-3 pt-10 text-white">
                 <p className="flex items-center gap-1.5 text-sm font-semibold [-webkit-text-stroke:1px_black] [paint-order:stroke_fill]">
