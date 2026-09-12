@@ -1,5 +1,4 @@
 import { useEffect, useRef, useState } from "react";
-import { toBlob } from "html-to-image";
 import { fetchFinishPhotoUrl } from "../lib/finishPhoto";
 import finishStampSeal from "../assets/finish-stamp-seal.png";
 import finishBackground from "../assets/images/background.png";
@@ -21,10 +20,7 @@ export default function FinishPhotoSection() {
   const [photoUrl, setPhotoUrl] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [retryCount, setRetryCount] = useState(0);
-  const [saveState, setSaveState] = useState("idle"); // "idle" | "saving" | "error"
-  const [saveErrorMsg, setSaveErrorMsg] = useState("");
   const autoRetriedRef = useRef(false);
-  const cardRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -62,60 +58,8 @@ export default function FinishPhotoSection() {
     setRetryCount((n) => n + 1);
   }
 
-  /**
-   * "완보 인증" 카드(soft-card 영역)를 이미지로 변환해 사진 앨범에 저장한다.
-   * iOS/Android 구분 없이 동작하도록 Web Share API(파일 공유)를 우선 사용한다.
-   * 공유 시트에서 "이미지 저장"을 선택하면 OS 표준 방식으로 사진 앨범에 저장되며,
-   * 이 API를 지원하지 않는 환경(주로 데스크톱 브라우저)에서는 일반 다운로드로 대체한다.
-   */
-  async function handleSaveImage() {
-    if (!cardRef.current || saveState === "saving") return;
-    setSaveState("saving");
-    setSaveErrorMsg("");
-    try {
-      const blob = await toBlob(cardRef.current, {
-        pixelRatio: 2,
-        cacheBust: true,
-        backgroundColor: "#ffffff",
-        filter: (node) =>
-          !(node instanceof HTMLElement) || node.dataset.captureIgnore !== "true",
-      });
-      if (!blob) throw new Error("이미지 생성에 실패했습니다.");
-
-      const fileName = `완보인증_사람사랑생명사랑걷기캠페인.png`;
-      const file = new File([blob], fileName, { type: "image/png" });
-
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: "완보 인증",
-          text: "제15회 사람사랑 생명사랑 걷기캠페인 완보 인증",
-        });
-      } else {
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fileName;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-        URL.revokeObjectURL(url);
-      }
-      setSaveState("idle");
-    } catch (err) {
-      // 사용자가 공유 시트를 취소한 경우는 오류로 취급하지 않는다.
-      if (err && err.name === "AbortError") {
-        setSaveState("idle");
-        return;
-      }
-      setSaveErrorMsg("사진 저장에 실패했습니다. 다시 시도해 주세요.");
-      setSaveState("error");
-    }
-  }
-
   return (
     <section
-      ref={cardRef}
       className="soft-card relative overflow-hidden p-4 md:p-7"
       style={{
         backgroundImage: `url(${finishBackground})`,
@@ -163,7 +107,6 @@ export default function FinishPhotoSection() {
                 src={photoUrl}
                 alt="완보 인증 사진"
                 className="max-h-[28rem] w-full object-cover"
-                crossOrigin="anonymous"
                 onError={handleImageError}
               />
               {/* 손글씨 스타일 응원 문구 오버레이 */}
@@ -229,23 +172,6 @@ export default function FinishPhotoSection() {
               <circle cx="9.5" cy="-1.6" r="1.3" />
             </g>
           </svg>
-        </div>
-      )}
-
-      {status === "ready" && (
-        <div data-capture-ignore="true" className="relative mt-5 flex flex-col items-center gap-2">
-          <button
-            type="button"
-            onClick={handleSaveImage}
-            disabled={saveState === "saving"}
-            className="flex w-full max-w-sm items-center justify-center gap-2 rounded-bubble bg-[#05437E] px-5 py-3 text-sm font-bold text-white shadow-soft transition active:scale-[0.98] disabled:opacity-60"
-          >
-            <span aria-hidden>📸</span>
-            {saveState === "saving" ? "저장 중…" : "인증 사진 저장하기"}
-          </button>
-          {saveState === "error" && (
-            <p className="text-sm text-red-500">{saveErrorMsg}</p>
-          )}
         </div>
       )}
     </section>
