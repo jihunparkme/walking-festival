@@ -314,7 +314,7 @@ export default function App() {
               <SurveyBanner
                 className="mt-4"
                 message="📝 캠페인 설문조사에 참여하고 소중한 의견을 들려주세요!"
-                note="*참여후 7번 만족도조사 부스에서 완료 화면을 보여주시면 소정의 상품을 드립니다."
+                note="*설문 참여 후 7번 만족도조사 부스에서 완료화면을 보여주시면 행운의 뽑기 기회를 드립니다."
               />
             </div>
           </header>
