@@ -79,9 +79,8 @@ export default function FinishPhotoSection() {
         </span>
       </div>
 
-      <p className="relative mt-4 text-base font-semibold leading-relaxed text-[#1a2a3a] md:text-lg">
-        <span className="font-extrabold text-[#06539D]">제15회 사람사랑 생명사랑 걷기캠페인</span>에
-        참여하여, 소중한 걸음을 <span className="font-extrabold text-[#E94D83]">완주</span>했습니다! ♡
+      <p className="relative mt-4 text-lg font-extrabold leading-relaxed text-[#06539D] md:text-xl">
+        제15회 사람사랑 생명사랑 걷기캠페인
       </p>
 
       <div className="relative mt-5 flex flex-col items-center justify-center">
