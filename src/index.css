@@ -1,4 +1,4 @@
-@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;800&family=Gaegu:wght@700&display=swap");
 
 @tailwind base;
 @tailwind components;
@@ -24,4 +24,10 @@ body {
   border-radius: 1.5rem;
   background: rgba(255, 255, 255, 0.92);
   box-shadow: 0 14px 30px rgba(58, 58, 74, 0.12);
+}
+
+/* 완보 인증 사진 위 손글씨 스타일 응원 문구용 */
+.handwriting {
+  font-family: "Gaegu", "Noto Sans KR", sans-serif;
+  font-weight: 700;
 }
